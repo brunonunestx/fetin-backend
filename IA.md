@@ -78,3 +78,17 @@ crie subpastas pra cada providers, arquivos do prisma dentro da pasta prisma. Al
 
 configure no prisma somente a tabela JobSubscription, seguindo o desgin da arquitetura, ao inves de criar foreign keys, deixe apenas como valores uuid mesmo, nao iremos criar o restante das tabelas.
 
+
+---
+
+### 2026-08-12 23:14:38
+
+Configure um provider do bullmq com definicao da queue de subscription apenas. O publisher e o processor dessa fila devem estar dentro do module job subscription (modulo novo dentro de modules). Ja crie o controller que contera a rota /vagas/:id/agendar com o operator id vindo no body do post, visto que nao teremos middleware p autenticacao para extrair o id do operador
+
+
+---
+
+### 2026-08-12 23:17:20
+
+adicione config de removeOnComplete para nao lotar a fila
+
