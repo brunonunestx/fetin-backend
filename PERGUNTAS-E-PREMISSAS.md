@@ -18,9 +18,13 @@
 
 8 - Como o sistema lida com busca geoespacial?
 
+9 - Uma leve consistência eventual é aceitável no contexto de aceitar uma vaga?
+
 ## PREMISSAS
 
 1 - Assumir intervalo maior entre as ondas, 10 min e 20 min, dando tempo para os usuários prioritários preencherem a vaga.
+
+Caso essa premissa estiver errada, basta reduzirmos o intervalo de sendAt registrado na tabela Waves. Para que isso funcione no tempo esperado, precisamos que as consultas no banco sejam extremamente rápidas, trabalhar com indexes nas tabelas FavoritesOperators e JobSubscriptions
 
 2 - Assumo que não tem envio em batch no provedor de notifications, controlo o numero de req/s para não estourar a rota
 
@@ -30,4 +34,5 @@
 
 5 - Assumo que urgente é uma flag is_urgent, marcada pelo local.
 
+6 - Assumo que uma consistência eventual é aceitável, considerando que existe a possibilidade de enviar e fazer pooling do status daquela solicitação, consultando o banco para saber se foi aceita ou rejeitada.
 
