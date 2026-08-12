@@ -120,3 +120,50 @@ modifique para o registro em batches, da pro bullmq consumir varios itens de uma
 
 repensei a arquitetura, ao inves de publicar em lote, vamos remover o db writer. Criar uma constraint unique no banco e remover os status. Nao precisamos registrar quem perdeu a corrida, somente saber quem ganhou. Assim, o job subscription faz o insert no banco dentro do proprio processor
 
+
+---
+
+### 2026-08-12 23:50:25
+
+node:internal/url:825
+      href = bindingUrl.parse(input, base, true);
+                        ^
+
+TypeError: Invalid URL
+    at new URL (node:internal/url:825:25)
+    at Object.<anonymous> (/home/bruno/Workspace/Projects/tech-test/services/core-api/src/providers/bullmq/bullmq.module.ts:5:18)
+    at Module._compile (node:internal/modules/cjs/loader:1706:14)
+    at Object..js (node:internal/modules/cjs/loader:1839:10)
+    at Module.load (node:internal/modules/cjs/loader:1441:32)
+    at Function._load (node:internal/modules/cjs/loader:1263:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+    at Module.require (node:internal/modules/cjs/loader:1463:12)
+    at require (node:internal/modules/helpers:147:16) {
+  code: 'ERR_INVALID_URL',
+  input: 'undefined'
+}
+ que erro eh esse na conexao com o redis? a url esta configurada no .env
+
+
+---
+
+### 2026-08-12 23:52:40
+
+Object.defineProperty(exports, "__esModule", { value: true });
+                      ^
+
+ReferenceError: exports is not defined in ES module scope
+    at file:///home/bruno/Workspace/Projects/tech-test/services/core-api/dist/src/generated/prisma/client.js:38:23
+    at ModuleJobSync.runSync (node:internal/modules/esm/module_job:458:37)
+    at ModuleLoader.importSyncForRequire (node:internal/modules/esm/loader:433:47)
+    at loadESMFromCJS (node:internal/modules/cjs/loader:1537:24)
+    at Module._compile (node:internal/modules/cjs/loader:1688:5)
+    at Object..js (node:internal/modules/cjs/loader:1839:10)
+    at Module.load (node:internal/modules/cjs/loader:1441:32)
+    at Function._load (node:internal/modules/cjs/loader:1263:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapMod isso eh erro do tipo de module nao eh?
+
+
+
