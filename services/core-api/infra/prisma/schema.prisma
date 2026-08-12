@@ -6,3 +6,20 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum SubStatus {
+  ACCEPTED
+  REJECTED_BY_CONCURRENCY
+}
+
+model JobSubscription {
+  id         String    @id @default(uuid()) @db.Uuid
+  jobId      String    @db.Uuid
+  operatorId String    @db.Uuid
+  status     SubStatus
+  createdAt  DateTime  @default(now())
+  deletedAt  DateTime?
+
+  @@index([operatorId])
+  @@map("job_subscriptions")
+}

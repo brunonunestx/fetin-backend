@@ -43,3 +43,38 @@ vamos configurar o prisma dentro do projeto, dentro de core api crie uma pasta i
 
 
 
+
+---
+
+### 2026-08-12 22:57:55
+
+agora configure dentro de src uma pasta modules, onde ficarao os modulos internos da plataforma, como job subscriptions. crie um index.ts na root de providers e modules para exportar um array dos Modules Nest dentro daquela pasta, desestruturado no app.module. REmova os arquivos (delete) app.controller e app.service
+
+
+---
+
+### 2026-08-12 22:58:28
+
+configure um docker compose na root do projeto para rodar um banco postgres e um redis
+
+
+---
+
+### 2026-08-12 22:59:59
+
+msa voce precisa registrar os providers dentro de imports, eles sao provedores no sentido de porta de entrada ou saida para servicos externos, nao providers internos do nest
+
+
+---
+
+### 2026-08-12 23:03:20
+
+crie subpastas pra cada providers, arquivos do prisma dentro da pasta prisma. Alem disso, configure uma pasta redis e crie um provider global pro redis, com metodos get, set, del  e loc, levando em conta nossa decisao arquitetural SET NX. Dentro desse provider, tambem crie um arquivos redis.key-builder.ts, com metodos que buildam a key do redis
+
+
+---
+
+### 2026-08-12 23:07:23
+
+configure no prisma somente a tabela JobSubscription, seguindo o desgin da arquitetura, ao inves de criar foreign keys, deixe apenas como valores uuid mesmo, nao iremos criar o restante das tabelas.
+
