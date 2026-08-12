@@ -99,3 +99,24 @@ adicione config de removeOnComplete para nao lotar a fila
 
 vamos implementar o processor agora, ele deve pegar um job da fila e tentar fazer o lock, se conseguir ele deve setar a key do jobOperator com o id do operator. Antes de fazer esse set, precisa validar se essa key ja existe, para garantir que ele nao pegou a liberacao do primeiro lock e aceitou para o operator id errado. Deixe um ttl de 5 min para a key do jobOperator e 5 min para a key do lock.
 
+
+---
+
+### 2026-08-12 23:27:15
+
+agora iremos configurar o dbWriter, crie uma nova queue, crie um module chamado dbWriter que vai ser quem vai escrever no banco na tabela job subscription. Ele vai consumir a fila recebendo um payload com operatorId, jobId e o status (ACCEPTED ou REJECTED BY CONCURRENCY, definidos no banco).
+
+
+---
+
+### 2026-08-12 23:31:28
+
+modifique para o registro em batches, da pro bullmq consumir varios itens de uma vez? um array de jobs?
+
+
+---
+
+### 2026-08-12 23:38:15
+
+repensei a arquitetura, ao inves de publicar em lote, vamos remover o db writer. Criar uma constraint unique no banco e remover os status. Nao precisamos registrar quem perdeu a corrida, somente saber quem ganhou. Assim, o job subscription faz o insert no banco dentro do proprio processor
+
