@@ -92,3 +92,10 @@ Configure um provider do bullmq com definicao da queue de subscription apenas. O
 
 adicione config de removeOnComplete para nao lotar a fila
 
+
+---
+
+### 2026-08-12 23:21:40
+
+vamos implementar o processor agora, ele deve pegar um job da fila e tentar fazer o lock, se conseguir ele deve setar a key do jobOperator com o id do operator. Antes de fazer esse set, precisa validar se essa key ja existe, para garantir que ele nao pegou a liberacao do primeiro lock e aceitou para o operator id errado. Deixe um ttl de 5 min para a key do jobOperator e 5 min para a key do lock.
+
