@@ -299,3 +299,10 @@ ERRO[0000] could not initialize 'test/k6/accept-proposal-race-ordered-multi-job.
 
 documente a arquitetura do proejto no CLAUDE.md, crie as skills de como criar modulos no backend e como escrever uma spec curta e descritiiva, sem codigo, apenas para descrever a ideia do que sera alterado
 
+
+---
+
+### 2026-08-13 03:28:04
+
+atualize nos testes pra usar a rota correta, atualizamos o nome pra aceitar e aceito
+

@@ -1,5 +1,5 @@
 // Teste de concorrência com desempate esperado: 100 VUs chamam
-// POST /vagas/:id/agendar para a mesma proposta, mas cada VU aguarda
+// POST /vagas/:id/aceitar para a mesma proposta, mas cada VU aguarda
 // (__VU - 1) * STAGGER_MS antes de disparar a requisição. Isso escalona
 // as chamadas em milissegundos, então a VU 1 é sempre a primeira a chegar.
 //
@@ -11,7 +11,7 @@
 // accept-proposal-race.test.js, onde todas disparam ao mesmo tempo e o
 // vencedor não é previsível.
 //
-// O resultado é conferido no teardown via GET /vagas/:id/agendado: fazemos
+// O resultado é conferido no teardown via GET /vagas/:id/aceito: fazemos
 // polling até status=FINISHED e comparamos o operatorId retornado com o
 // esperado (VU 1).
 //

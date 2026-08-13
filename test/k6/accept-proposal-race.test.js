@@ -1,11 +1,11 @@
 // Teste de concorrência: 100 operadores tentando aceitar a mesma proposta
-// (vaga) simultaneamente, via POST /vagas/:id/agendar.
+// (vaga) simultaneamente, via POST /vagas/:id/aceitar.
 //
 // A API enfileira o aceite (BullMQ) e responde de forma otimista, então
 // as 100 requisições concorrentes só validam a camada HTTP (devem ser
 // aceitas com sucesso). A disputa em si (lock Redis + unique constraint no
 // Postgres) é resolvida de forma assíncrona pelo worker — o resultado é
-// conferido no teardown via GET /vagas/:id/agendado, que expõe o vencedor.
+// conferido no teardown via GET /vagas/:id/aceito, que expõe o vencedor.
 //
 // Uso:
 //   k6 run test/k6/accept-proposal-race.test.js

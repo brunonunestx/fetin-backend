@@ -16,7 +16,7 @@ export class JobSubscriptionController {
     private readonly jobSubscriptionService: JobSubscriptionService,
   ) {}
 
-  @Post(':id/agendar')
+  @Post(':id/aceitar')
   async schedule(
     @Param('id', ParseUUIDPipe) jobId: string,
     @Body() body: ScheduleJobSubscriptionDto,
@@ -27,7 +27,7 @@ export class JobSubscriptionController {
     });
   }
 
-  @Get(':id/agendado')
+  @Get(':id/aceito')
   async getAcceptStatus(
     @Param('id', ParseUUIDPipe) jobId: string,
   ): Promise<JobSubscriptionStatusDto> {

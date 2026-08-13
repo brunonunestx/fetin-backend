@@ -37,7 +37,7 @@ O service decide **quando** publicar (chamando o publisher), o processor decide 
 ## 3. Rotas e DTOs
 
 - Path params validados via Pipe no controller (`@Param('id', ParseUUIDPipe)`), nunca `string` cru repassado pro service.
-- Nomes de rota em português, no padrão já usado (`vagas/:id/agendar`, `vagas/:id/agendado`) — seguir o vocabulário do domínio já estabelecido nas rotas existentes, não traduzir pra inglês no meio do caminho.
+- Nomes de rota em português, no padrão já usado (`vagas/:id/aceitar`, `vagas/:id/aceito`) — seguir o vocabulário do domínio já estabelecido nas rotas existentes, não traduzir pra inglês no meio do caminho.
 - DTO de saída só quando a resposta não é simplesmente o model do Prisma (ex: `JobSubscriptionStatusDto` combina dado vindo do Redis e do Postgres) — não criar DTO de saída pra um `Promise<void>` ou pra um retorno que já é o model.
 
 ## 4. Fluxo assíncrono com concorrência (publisher/processor)

@@ -7,15 +7,15 @@ export const JobSubscriptionStatus = {
   FINISHED: 'finished',
 };
 
-// GET /vagas/:id/agendado — expõe o resultado da corrida (processada
+// GET /vagas/:id/aceito — expõe o resultado da corrida (processada
 // assincronamente pelo worker do BullMQ).
 export function getAcceptStatus(jobId) {
-  const res = http.get(`${BASE_URL}/vagas/${jobId}/agendado`);
+  const res = http.get(`${BASE_URL}/vagas/${jobId}/aceito`);
   const body = res.status === 200 ? JSON.parse(res.body) : null;
   return { res, body };
 }
 
-// Faz polling em /agendado até a corrida ser resolvida (status FINISHED)
+// Faz polling em /aceito até a corrida ser resolvida (status FINISHED)
 // ou o timeout ser atingido. Retorna o corpo da resposta ({status, operatorId})
 // ou null se não resolveu a tempo.
 export function waitForWinner(jobId, { timeoutSeconds = 15, pollIntervalSeconds = 0.5 } = {}) {

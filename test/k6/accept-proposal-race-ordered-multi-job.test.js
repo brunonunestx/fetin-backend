@@ -6,7 +6,7 @@
 // própria disputa.
 //
 // Isso valida, sob várias corridas simultâneas, que:
-//   - cada vaga resolve para exatamente 1 vencedor (GET /vagas/:id/agendado);
+//   - cada vaga resolve para exatamente 1 vencedor (GET /vagas/:id/aceito);
 //   - o vencedor é sempre quem chegou primeiro NAQUELA vaga — sem nenhuma
 //     vaga "roubar" o resultado de outra por conta do lock/queue compartilhados.
 //
