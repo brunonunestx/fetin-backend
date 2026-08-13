@@ -195,3 +195,100 @@ crie mais um teste com ms de diferenca entre as VUs chamando a rota, assim voce 
 
 vamos criar um service para concentrar a nossa regra de negocioa, o controller chama o service. Vamos adicionar mais uma rota GET para polling do vencedor da corrida, deve receber o job id e o service tenta retornar o que ta no redis, se nao tiver no redis procura no banco se nao achar no banco retorne um status pending e o operatorId vazio, se achar no redis ou no banco retorne status finished e o operatorId preenchido com quem venceu a corrida, desse modo o front consegue fazer pooling e saber se ele perdeu ou ganhou
 
+
+---
+
+### 2026-08-13 01:00:00
+
+adicionei a rota agendado p pegar o status, use ela p saber se deu bom o winner
+
+
+---
+
+### 2026-08-13 01:01:27
+
+melhore para fazer varios testes de concorrencia em paralelo, de varios jobs distintos, para validarmos se funciona para multiplos casos seguidos
+
+
+---
+
+### 2026-08-13 01:04:21
+
+faca isso no ordered tambem, com validacao de agendado
+
+
+---
+
+### 2026-08-13 01:09:00
+
+me explique esses casos de desempate
+
+
+---
+
+### 2026-08-13 01:10:36
+
+mas me explique esse cara, como ele sabe quem eh o primeiro?
+
+
+---
+
+### 2026-08-13 01:13:05
+
+checks_total.......: 110    153.320055/s
+    checks_succeeded...: 95.45% 105 out of 110
+    checks_failed......: 4.54%  5 out of 110
+
+    ✓ aceite recebido (2xx)
+    ✓ job_0 resolvido (status finished)
+    ✗ job_0 venceu o primeiro operador
+      ↳  0% — ✓ 0 / ✗ 1
+    ✓ job_1 resolvido (status finished)
+    ✗ job_1 venceu o primeiro operador
+      ↳  0% — ✓ 0 / ✗ 1
+    ✓ job_2 resolvido (status finished)
+    ✗ job_2 venceu o primeiro operador
+      ↳  0% — ✓ 0 / ✗ 1
+    ✓ job_3 resolvido (status finished)
+    ✗ job_3 venceu o primeiro operador
+      ↳  0% — ✓ 0 / ✗ 1
+    ✓ job_4 resolvido (status finished)
+    ✗ job_4 venceu o primeiro operador
+      ↳  0% — ✓ 0 / ✗ 1
+
+    CUSTOM
+    accept_duration................: avg=3.36ms   min=576.43µs med=1.09ms  max=16.83ms  p(90)=11.38ms  p(95)=13.94ms 
+    accepted_requests..............: 100   139.381869/s
+
+    HTTP
+    http_req_duration..............: avg=3.22ms   min=318.67µs med=1.06ms  max=16.83ms  p(90)=11.17ms  p(95)=13.8ms  
+      { expected_response:true }...: avg=3.22ms   min=318.67µs med=1.06ms  max=16.83ms  p(90)=11.17ms  p(95)=13.8ms  
+    http_req_failed................: 0.00% 0 out of 105
+    http_reqs......................: 105   146.350962/s
+
+    EXECUTION
+    iteration_duration.............: avg=236.91ms min=3.08ms   med=231.8ms max=712.11ms p(90)=532.17ms p(95)=602.67ms
+    iterations.....................: 100   139.381869/s
+
+    NETWORK
+    data_received..................: 22 kB 31 kB/s
+    data_sent......................: 23 kB 32 kB/s
+
+
+
+
+running (0m00.7s), 000/100 VUs, 100 complete and 0 interrupted iterations
+job_0 ✓ [======================================] 20 VUs  00.7s/31s  20/20 iters, 1 per VU
+job_1 ✓ [======================================] 20 VUs  00.2s/31s  20/20 iters, 1 per VU
+job_2 ✓ [======================================] 20 VUs  00.5s/31s  20/20 iters, 1 per VU
+job_3 ✓ [======================================] 20 VUs  00.4s/31s  20/20 iters, 1 per VU
+job_4 ✓ [======================================] 20 VUs  00.0s/31s  20/20 iters, 1 per VU
+ERRO[0000] thresholds on metrics 'checks' have been crossed sempre ta dando 95 por cento, isso eh erro do teste, nao concorrencia
+
+
+---
+
+### 2026-08-13 01:15:04
+
+ERRO[0000] could not initialize 'test/k6/accept-proposal-race-ordered-multi-job.test.js': could not load JS test 'file:///home/bruno/Workspace/Projects/tech-test/test/k6/accept-proposal-race-ordered-multi-job.test.js': json: unknown field "startVU"
+

@@ -11,19 +11,20 @@
 // accept-proposal-race.test.js, onde todas disparam ao mesmo tempo e o
 // vencedor não é previsível.
 //
+// O resultado é conferido no teardown via GET /vagas/:id/agendado: fazemos
+// polling até status=FINISHED e comparamos o operatorId retornado com o
+// esperado (VU 1).
+//
 // Uso:
 //   k6 run test/k6/accept-proposal-race-ordered.test.js
 //   k6 run -e STAGGER_MS=5 -e JOB_ID=<uuid> test/k6/accept-proposal-race-ordered.test.js
-//
-// Após rodar, confirme no banco que o vencedor foi a VU 1:
-//   SELECT * FROM job_subscriptions WHERE job_id = '<jobId>';
-//   -- operator_id esperado: 00000000-0000-4000-8000-000000000001
 
-import http from 'k6/http';
 import { check, sleep } from 'k6';
 import { Counter, Trend } from 'k6/metrics';
 import { orderedUuid } from '../helpers/uuid.js';
-import { BASE_URL, JOB_ID } from '../helpers/config.js';
+import { JOB_ID } from '../helpers/config.js';
+import { scheduleAccept, checkAccepted } from '../helpers/schedule.js';
+import { waitForWinner } from '../helpers/accept-status.js';
 
 const VUS = 100;
 const STAGGER_MS = Number(__ENV.STAGGER_MS || 10);
@@ -64,17 +65,10 @@ export default function (data) {
   }
 
   const operatorId = orderedUuid(__VU);
-  const payload = JSON.stringify({ operatorId });
-  const params = {
-    headers: { 'Content-Type': 'application/json' },
-  };
-
-  const res = http.post(`${BASE_URL}/vagas/${data.jobId}/agendar`, payload, params);
+  const res = scheduleAccept(data.jobId, operatorId);
   acceptDuration.add(res.timings.duration);
 
-  const ok = check(res, {
-    'aceite recebido (2xx)': (r) => r.status >= 200 && r.status < 300,
-  });
+  const ok = checkAccepted(res);
 
   if (ok) {
     acceptedRequests.add(1);
@@ -85,7 +79,19 @@ export default function (data) {
 }
 
 export function teardown(data) {
-  console.log(
-    `[teardown] jobId=${data.jobId} — verifique em job_subscriptions que operator_id=${EXPECTED_WINNER} (VU 1) venceu a disputa.`,
-  );
+  const winner = waitForWinner(data.jobId);
+
+  check(winner, {
+    'corrida resolvida (status finished)': (w) => w !== null,
+    'VU 1 venceu a corrida': (w) => w !== null && w.operatorId === EXPECTED_WINNER,
+  });
+
+  if (winner) {
+    const outcome = winner.operatorId === EXPECTED_WINNER ? 'OK' : 'FALHOU';
+    console.log(
+      `[teardown] jobId=${data.jobId} — vencedor: operatorId=${winner.operatorId} | esperado=${EXPECTED_WINNER} | ${outcome}`,
+    );
+  } else {
+    console.error(`[teardown] jobId=${data.jobId} — corrida não resolveu a tempo (ainda 'pending').`);
+  }
 }
