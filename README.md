@@ -10,18 +10,35 @@ Sobe Postgres, Redis e a API (`http://localhost:3000`). No start do container, a
 
 ## Rodar o teste de concorrência (k6)
 
-Requer [k6](https://k6.io/docs/get-started/installation/) instalado localmente. Com a API já de pé (passo acima):
+Com a API já de pé (passo acima), roda o `test/run.sh` — ele instala o k6 localmente (sem sudo, em `test/.bin/`) se não encontrar um já instalado, e então executa o teste:
 
 Teste principal — 100 operadores disputando a mesma vaga, valida que só 1 confirmação vence:
 
 ```
-k6 run test/k6/accept-proposal-race.test.js
+test/run.sh
 ```
 
-Variações (mesma validação, outros cenários de concorrência):
+Todas as variações (mesma validação, outros cenários de concorrência):
 
 ```
-k6 run test/k6/accept-proposal-race-ordered.test.js
-k6 run test/k6/accept-proposal-race-multi-job.test.js
-k6 run test/k6/accept-proposal-race-ordered-multi-job.test.js
+test/run.sh all
 ```
+
+Ou uma variação específica:
+
+```
+test/run.sh k6/accept-proposal-race-ordered.test.js
+test/run.sh k6/accept-proposal-race-multi-job.test.js
+test/run.sh k6/accept-proposal-race-ordered-multi-job.test.js
+```
+
+## Alternativa: mesmo teste de concorrência, em vitest (sem instalar k6)
+
+```
+docker compose up -d
+cd services/core-api
+pnpm install
+pnpm test
+```
+
+Cobre o mesmo cenário do teste principal do k6 (100 operadores disputando a mesma vaga via HTTP real) e confere o resultado direto na tabela `job_subscriptions`.

@@ -401,3 +401,31 @@ adicione um step pra rodar a migration no banco (pode ser o que esta definido no
 
 documente no README.md o comando unico p subir a api e o banco (docker compose up -d) + os comandos p rodar o k6, sem readme enfeitado, so o md basicao
 
+
+---
+
+### 2026-08-13 13:30:54
+
+estamos cumprindo o desafio tecnico?
+
+
+---
+
+### 2026-08-13 13:45:21
+
+crie um .sh pra rodar o teste, que instala o k6
+
+
+---
+
+### 2026-08-13 13:58:26
+
+crie esse mesmo teste que fizemos com o k6 para rodar com vitest
+
+
+---
+
+### 2026-08-13 14:53:13
+
+agora funciona com o docker compose up -d + pnpm test certo
+
