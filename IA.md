@@ -292,3 +292,10 @@ ERRO[0000] thresholds on metrics 'checks' have been crossed sempre ta dando 95 p
 
 ERRO[0000] could not initialize 'test/k6/accept-proposal-race-ordered-multi-job.test.js': could not load JS test 'file:///home/bruno/Workspace/Projects/tech-test/test/k6/accept-proposal-race-ordered-multi-job.test.js': json: unknown field "startVU"
 
+
+---
+
+### 2026-08-13 01:43:31
+
+documente a arquitetura do proejto no CLAUDE.md, crie as skills de como criar modulos no backend e como escrever uma spec curta e descritiiva, sem codigo, apenas para descrever a ideia do que sera alterado
+
