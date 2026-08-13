@@ -167,3 +167,31 @@ ReferenceError: exports is not defined in ES module scope
 
 
 
+
+---
+
+### 2026-08-13 00:35:46
+
+agora, iremos fazer um teste de concorrencia na plataforma. Crie, usando k6, um teste que sobe 100 VUs para que facamos 100 usuarios aceitarem a proposta simultaneamente, para validarmos a concorrencia da plataforma. Crie uma pasta test na root, dentro dela crie uma pasta k6 e uma pasta helpers
+
+
+---
+
+### 2026-08-13 00:36:57
+
+crie um docker file multistage para rodar essa api, para conseguirmos uma imagem mais leve. Adicione no docker compose uma section da api para rodar baseada nesse dockerfile
+
+
+---
+
+### 2026-08-13 00:51:36
+
+crie mais um teste com ms de diferenca entre as VUs chamando a rota, assim voce espera que o primeiro que voce enviar venca a corrida
+
+
+---
+
+### 2026-08-13 00:54:17
+
+vamos criar um service para concentrar a nossa regra de negocioa, o controller chama o service. Vamos adicionar mais uma rota GET para polling do vencedor da corrida, deve receber o job id e o service tenta retornar o que ta no redis, se nao tiver no redis procura no banco se nao achar no banco retorne um status pending e o operatorId vazio, se achar no redis ou no banco retorne status finished e o operatorId preenchido com quem venceu a corrida, desse modo o front consegue fazer pooling e saber se ele perdeu ou ganhou
+

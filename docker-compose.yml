@@ -22,5 +22,19 @@ services:
       timeout: 3s
       retries: 5
 
+  api:
+    build:
+      context: ./services
+      dockerfile: core-api/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://user:password@postgres:5432/core_api?schema=public
+      REDIS_URL: redis://redis:6379
+    ports: ["3000:3000"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
 volumes:
   pgdata:
