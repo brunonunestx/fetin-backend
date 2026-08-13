@@ -164,7 +164,7 @@ ReferenceError: exports is not defined in ES module scope
     at Function._load (node:internal/modules/cjs/loader:1263:12)
     at TracingChannel.traceSync (node:diagnostics_channel:322:14)
     at wrapMod isso eh erro do tipo de module nao eh?
-
+**ESSE É UM CASO QUE EU NÃO REVISEI O QUE FOI FEITO**: A IA é muito mais rápida e tem muito mais conhecimento sobre cada stack do que eu, logo ela identifica bugs muito mais rápido. A maioria dos erros e bugs eu peço um overview pra IA antes de sair aplicando correções.
 
 
 
@@ -284,6 +284,7 @@ job_2 ✓ [======================================] 20 VUs  00.5s/31s  20/20 iter
 job_3 ✓ [======================================] 20 VUs  00.4s/31s  20/20 iters, 1 per VU
 job_4 ✓ [======================================] 20 VUs  00.0s/31s  20/20 iters, 1 per VU
 ERRO[0000] thresholds on metrics 'checks' have been crossed sempre ta dando 95 por cento, isso eh erro do teste, nao concorrencia
+**ESSE É UM CENÁRIO DE ERRO DA IA**: Ela escreveu os testes para validar a concorrência. Durante o meu review identifiquei que o threshold de erro era sempre o mesmo. Ao investigarmos mais a fundo ela tinha calculado de forma incorreta a ordem das req e ao buscar o status da race condition estava dando erro.
 
 
 ---
@@ -305,4 +306,98 @@ documente a arquitetura do proejto no CLAUDE.md, crie as skills de como criar mo
 ### 2026-08-13 03:28:04
 
 atualize nos testes pra usar a rota correta, atualizamos o nome pra aceitar e aceito
+
+
+---
+
+### 2026-08-13 03:58:27
+
+estou com uma duvia, quero usar k6 para medir a latencia de envio da mensagem  -> client via websocket, vide ## Plano de latência para a tela "Vagas perto de mim" em DECISOES, como podemos fazer essa medicao? tem alguma forma mais simples de levantarmos esse dado ao mesmo tempo q realizamos um teste de carga visando chegar a 500 req/s?
+
+
+---
+
+### 2026-08-13 04:00:32
+
+no caso para testar req/s no ws subiumos o numero de conexoes ao socket num rampup ate chegar em 500, certo?
+
+
+---
+
+### 2026-08-13 04:22:49
+
+Plano de latência incompleto — hoje só descreve GiST/BTree + medição de p99 do WS. Falta fechar o requisito 4 em si: o plano de carga do endpoint HTTP (GET 
+  /vagas/perto-de-mim, k6 ramp-up até 500 req/s, métrica http_req_duration p99<200ms). O WS mede a atualização em tempo real, mas não é o que o requisito 4 pede
+  como métrica principal. isso ficou em aberto, eu assumi q vai ser websocket, entao ignore isso, vou adicionar em premissas. O que mais falta, revise os arquivos denovo:
+
+
+---
+
+### 2026-08-13 04:25:08
+
+faca isso
+
+
+---
+
+### 2026-08-13 04:46:33
+
+adicione pra mim uma secao explicando o count de notifications. Temos uma tabela notifications, a ideia eh fazer o count de la por operatorId e data, garantindo que ele nao receba mais de 3 notificacoes no dia
+
+
+
+
+---
+
+### 2026-08-13 04:55:48
+
+ta faltando copiar o .env pra dentro do build do docker, esta dando erro de missing env var do prisma
+
+
+---
+
+### 2026-08-13 05:00:52
+
+o dotenv config ta como devDependencie apenas? quebrou a execucao do container por missing dele
+
+
+---
+
+### 2026-08-13 05:02:07
+
+Error: Cannot find module 'dotenv/config'
+Require stack:
+- /app/core-api/dist/src/main.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1430:15)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1040:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1045:22)
+    at Function._load (node:internal/modules/cjs/loader:1216:25)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:254:19)
+    at Module.require (node:internal/modules/cjs/loader:1527:12)
+    at require (node:internal/modules/helpers:147:16)
+    at Object.<anonymous> (/app/core-api/dist/src/main.js:3:1)
+    at Module._compile (node:internal/modules/cjs/loader:1781:14)
+    at Object..js (node:internal/modules/cjs/loader:1913:10) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [ '/app/core-api/dist/src/main.js' ]
+}
+
+Node.js v22.23.2
+node:internal/modules/cjs/loader:1433
+  throw err;
+  ^
+
+
+---
+
+### 2026-08-13 05:05:34
+
+adicione um step pra rodar a migration no banco (pode ser o que esta definido no proprio dockerfile) mas para isso precisamos que a api dependa do banco estar healthy
+
+
+---
+
+### 2026-08-13 05:14:37
+
+documente no README.md o comando unico p subir a api e o banco (docker compose up -d) + os comandos p rodar o k6, sem readme enfeitado, so o md basicao
 

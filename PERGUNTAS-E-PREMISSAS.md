@@ -20,6 +20,8 @@
 
 9 - Uma leve consistência eventual é aceitável no contexto de aceitar uma vaga?
 
+10 - A tela de "Ver vagas perto de mim" solicita uma carga de 500 req/s com p99 de 200ms. Ao mesmo tempo ela solicita comunicação realtime com o servidor, o que configura uma conexão websocket ou sse, que não lida com requisições por segundo mas sim com conexão aberta entre cliente/servidor e envio de mensagens (bidirecional ou unidirecional). Devemos seguir na linha de uma rota e lidar com pooling no frontend ou abrir uma conexão websocket para atualização em realtime?
+
 ## PREMISSAS
 
 1 - Assumir intervalo maior entre as ondas, 10 min e 20 min, dando tempo para os usuários prioritários preencherem a vaga.
@@ -28,11 +30,16 @@ Caso essa premissa estiver errada, basta reduzirmos o intervalo de sendAt regist
 
 2 - Assumo que não tem envio em batch no provedor de notifications, controlo o numero de req/s para não estourar a rota
 
+Caso essa premissa estiver errada, implemento um consumer que agrupa em lotes os jobs vindos do bullmq e envia em uma req http. Diminui a carga do nosso lado, menos conexoes http sendo abertas. Estamos lindo com o pior caso.
+
 3 - Envio dispatch de cancelamento apenas, evito atualização, várias atualizações podem spammar as notificações e bater o teto diário
 
-4 - Colocar usuário no grupo mais prioritário da onda.
+Essa premissa nao sera afetada. O sistema foi desenhada para lidar com o id do job (vaga). Qualquer atualização antes do envio será efetivada. O que pode mudar será voltar uma Wave como SENT para PENDING, para ser reenviada.
 
-5 - Assumo que urgente é uma flag is_urgent, marcada pelo local.
+4 - Assumo que urgente é uma flag is_urgent, marcada pelo local.
 
-6 - Assumo que uma consistência eventual é aceitável, considerando que existe a possibilidade de enviar e fazer pooling do status daquela solicitação, consultando o banco para saber se foi aceita ou rejeitada.
+Caso tenha errado nisso, por ser uma boolean basta tratar a nova verificacao de urgente como 0 ou 1, booleano padrao, assim o restante da logica nao sera alterada. Conseguimos fazer comparativos de datas e tempo trazendo para boolean. O restante da logica nao sera afetada.
 
+5 - Assumo que uma consistência eventual é aceitável, considerando que existe a possibilidade de enviar e fazer pooling do status daquela solicitação, consultando o banco para saber se foi aceita ou rejeitada.
+
+Mover a decisão (não a persistência) pro caminho síncrono do request. Em vez do controller só publicar no BullMQ e devolver otimista, ele chama o Redis diretamente (SET lock:jobId operatorId NX PX) na hora, e responde ACCEPTED/REJECTED já com o resultado do lock.
