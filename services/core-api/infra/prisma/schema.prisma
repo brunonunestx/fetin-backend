@@ -19,6 +19,20 @@ model JobSubscription {
   @@map("job_subscriptions")
 }
 
+model Job {
+  id              String   @id @default(uuid()) @db.Uuid
+  localId         String   @db.Uuid
+  title           String
+  description     String
+  startsAt        DateTime
+  durationMinutes Int
+  value           Decimal  @db.Decimal(10, 2)
+  createdAt       DateTime @default(now())
+
+  @@index([localId])
+  @@map("jobs")
+}
+
 model Local {
   id        String   @id @default(uuid()) @db.Uuid
   ownerId   String   @db.Uuid
