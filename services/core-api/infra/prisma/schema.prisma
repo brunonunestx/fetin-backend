@@ -19,6 +19,20 @@ model JobSubscription {
   @@map("job_subscriptions")
 }
 
+model Local {
+  id        String   @id @default(uuid()) @db.Uuid
+  ownerId   String   @db.Uuid
+  name      String
+  address   String
+  city      String
+  state     String
+  zipCode   String
+  createdAt DateTime @default(now())
+
+  @@index([ownerId])
+  @@map("locals")
+}
+
 enum UserType {
   operator
   local_owner
