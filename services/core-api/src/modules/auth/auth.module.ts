@@ -10,6 +10,7 @@ const DEFAULT_JWT_EXPIRES_IN_SECONDS = 60 * 60;
   imports: [
     PrismaModule,
     JwtModule.registerAsync({
+      global: true,
       useFactory: (): JwtModuleOptions => ({
         secret: process.env.JWT_SECRET,
         signOptions: {
