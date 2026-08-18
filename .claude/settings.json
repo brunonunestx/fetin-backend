@@ -1,16 +1,1 @@
-{
-  "hooks": {
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "jq -r '\"\\n---\\n\\n### \" + (now | strftime(\"%Y-%m-%d %H:%M:%S\")) + \"\\n\\n\" + .prompt + \"\\n\"' >> \"${CLAUDE_PROJECT_DIR:-.}/IA.md\" 2>/dev/null || true",
-            "timeout": 10,
-            "statusMessage": "Registrando prompt em IA.md..."
-          }
-        ]
-      }
-    ]
-  }
-}
+{}
