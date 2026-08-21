@@ -5,5 +5,5 @@ export enum JobSubscriptionStatus {
 
 export class JobSubscriptionStatusDto {
   status!: JobSubscriptionStatus;
-  operatorId!: string;
+  operatorId?: string;
 }
