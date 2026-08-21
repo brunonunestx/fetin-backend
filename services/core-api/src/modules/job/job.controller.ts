@@ -5,6 +5,7 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -14,6 +15,7 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import type { AuthenticatedRequest } from '../../common/types/authenticated-request';
 import { Job } from '../../generated/prisma/client';
 import { CreateJobDto } from './dto/create-job.dto';
+import { FindJobsDto } from './dto/find-jobs.dto';
 import { JobService } from './job.service';
 
 @Controller('jobs')
@@ -28,6 +30,11 @@ export class JobController {
     @Body() body: CreateJobDto,
   ): Promise<Job> {
     return this.jobService.create(request.user.userId, body);
+  }
+
+  @Get()
+  async findAll(@Query() query: FindJobsDto): Promise<Job[]> {
+    return this.jobService.findAll(query.localId);
   }
 
   @Get(':id')

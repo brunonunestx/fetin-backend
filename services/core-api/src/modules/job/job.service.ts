@@ -42,6 +42,13 @@ export class JobService {
     });
   }
 
+  async findAll(localId?: string): Promise<Job[]> {
+    return this.prisma.job.findMany({
+      where: localId ? { localId } : undefined,
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async findById(id: string): Promise<Job> {
     const job = await this.prisma.job.findUnique({ where: { id } });
 
