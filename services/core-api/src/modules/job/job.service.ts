@@ -50,6 +50,14 @@ export class JobService {
     });
   }
 
+  async findManyByIds(ids: string[]): Promise<Job[]> {
+    if (ids.length === 0) {
+      return [];
+    }
+
+    return this.prisma.job.findMany({ where: { id: { in: ids } } });
+  }
+
   async findById(id: string): Promise<Job> {
     const job = await this.prisma.job.findUnique({ where: { id } });
 
