@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Local } from '../../generated/prisma/client';
 import { PrismaProvider } from '../../providers/prisma/prisma.provider';
 import { CreateLocalDto } from './dto/create-local.dto';
@@ -18,5 +22,32 @@ export class LocalService {
         zipCode: data.zipCode,
       },
     });
+  }
+
+  async findAllByOwner(ownerId: string): Promise<Local[]> {
+    return this.prisma.local.findMany({
+      where: { ownerId },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async findById(id: string, ownerId: string): Promise<Local> {
+    const local = await this.prisma.local.findUnique({ where: { id } });
+
+    if (!local) {
+      throw new NotFoundException({
+        code: 'LOCAL_NOT_FOUND',
+        message: 'Local não encontrado',
+      });
+    }
+
+    if (local.ownerId !== ownerId) {
+      throw new ForbiddenException({
+        code: 'LOCAL_NOT_OWNED',
+        message: 'Local não pertence ao usuário autenticado',
+      });
+    }
+
+    return local;
   }
 }

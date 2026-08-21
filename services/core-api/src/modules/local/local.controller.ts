@@ -1,4 +1,13 @@
-import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -19,5 +28,20 @@ export class LocalController {
     @Body() body: CreateLocalDto,
   ): Promise<Local> {
     return this.localService.create(request.user.userId, body);
+  }
+
+  @Get()
+  @Roles('local_owner')
+  async findAll(@Req() request: AuthenticatedRequest): Promise<Local[]> {
+    return this.localService.findAllByOwner(request.user.userId);
+  }
+
+  @Get(':id')
+  @Roles('local_owner')
+  async findOne(
+    @Req() request: AuthenticatedRequest,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<Local> {
+    return this.localService.findById(id, request.user.userId);
   }
 }
