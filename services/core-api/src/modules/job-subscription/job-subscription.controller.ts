@@ -1,33 +1,39 @@
 import {
-  Body,
   Controller,
   Get,
   Param,
   ParseUUIDPipe,
   Post,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import type { AuthenticatedRequest } from '../../common/types/authenticated-request';
 import { JobSubscriptionStatusDto } from './dto/job-subscription-status.dto';
-import { ScheduleJobSubscriptionDto } from './dto/schedule-job-subscription.dto';
 import { JobSubscriptionService } from './job-subscription.service';
 
-@Controller('vagas')
+@Controller('jobs')
 export class JobSubscriptionController {
   constructor(
     private readonly jobSubscriptionService: JobSubscriptionService,
   ) {}
 
-  @Post(':id/aceitar')
+  @Post(':id/accept')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('operator')
   async schedule(
     @Param('id', ParseUUIDPipe) jobId: string,
-    @Body() body: ScheduleJobSubscriptionDto,
+    @Req() request: AuthenticatedRequest,
   ): Promise<void> {
     await this.jobSubscriptionService.schedule({
       jobId,
-      operatorId: body.operatorId,
+      operatorId: request.user.userId,
     });
   }
 
-  @Get(':id/aceito')
+  @Get(':id/accepted')
   async getAcceptStatus(
     @Param('id', ParseUUIDPipe) jobId: string,
   ): Promise<JobSubscriptionStatusDto> {

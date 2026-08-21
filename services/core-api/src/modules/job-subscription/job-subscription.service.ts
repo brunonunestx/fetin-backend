@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { JobService } from '../job/job.service';
 import { PrismaProvider } from '../../providers/prisma/prisma.provider';
 import { RedisKeyBuilder } from '../../providers/redis/redis.key-builder';
 import { RedisProvider } from '../../providers/redis/redis.provider';
@@ -17,9 +18,11 @@ export class JobSubscriptionService {
     private readonly publisher: JobSubscriptionPublisher,
     private readonly redis: RedisProvider,
     private readonly prisma: PrismaProvider,
+    private readonly jobService: JobService,
   ) {}
 
   async schedule(data: JobSubscriptionJobData): Promise<void> {
+    await this.jobService.findById(data.jobId);
     await this.publisher.publish(data);
   }
 
