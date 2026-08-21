@@ -57,7 +57,7 @@ export class JobSubscriptionService {
       };
     }
 
-    return { status: JobSubscriptionStatus.PENDING, operatorId: '' };
+    return { status: JobSubscriptionStatus.PENDING };
   }
 
   async findAcceptedByOperator(operatorId: string): Promise<AcceptedJobDto[]> {
