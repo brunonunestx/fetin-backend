@@ -20,14 +20,15 @@ model JobSubscription {
 }
 
 model Job {
-  id              String   @id @default(uuid()) @db.Uuid
-  localId         String   @db.Uuid
+  id              String    @id @default(uuid()) @db.Uuid
+  localId         String    @db.Uuid
   title           String
   description     String
   startsAt        DateTime
   durationMinutes Int
-  value           Decimal  @db.Decimal(10, 2)
-  createdAt       DateTime @default(now())
+  value           Decimal   @db.Decimal(10, 2)
+  createdAt       DateTime  @default(now())
+  cancelledAt     DateTime?
 
   @@index([localId])
   @@map("jobs")

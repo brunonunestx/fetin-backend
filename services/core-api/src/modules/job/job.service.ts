@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -60,5 +61,32 @@ export class JobService {
     }
 
     return job;
+  }
+
+  async cancel(ownerId: string, jobId: string): Promise<Job> {
+    const job = await this.findById(jobId);
+
+    const local = await this.prisma.local.findUnique({
+      where: { id: job.localId },
+    });
+
+    if (!local || local.ownerId !== ownerId) {
+      throw new ForbiddenException({
+        code: 'LOCAL_NOT_OWNED',
+        message: 'Local não pertence ao usuário autenticado',
+      });
+    }
+
+    if (job.cancelledAt) {
+      throw new ConflictException({
+        code: 'JOB_ALREADY_CANCELLED',
+        message: 'Vaga já foi cancelada',
+      });
+    }
+
+    return this.prisma.job.update({
+      where: { id: jobId },
+      data: { cancelledAt: new Date() },
+    });
   }
 }

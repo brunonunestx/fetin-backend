@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { JobService } from '../job/job.service';
 import { PrismaProvider } from '../../providers/prisma/prisma.provider';
 import { RedisKeyBuilder } from '../../providers/redis/redis.key-builder';
@@ -22,7 +22,15 @@ export class JobSubscriptionService {
   ) {}
 
   async schedule(data: JobSubscriptionJobData): Promise<void> {
-    await this.jobService.findById(data.jobId);
+    const job = await this.jobService.findById(data.jobId);
+
+    if (job.cancelledAt) {
+      throw new ConflictException({
+        code: 'JOB_CANCELLED',
+        message: 'Vaga cancelada não pode ser aceita',
+      });
+    }
+
     await this.publisher.publish(data);
   }
 
