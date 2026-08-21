@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
   Query,
   Req,
@@ -40,5 +41,15 @@ export class JobController {
   @Get(':id')
   async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<Job> {
     return this.jobService.findById(id);
+  }
+
+  @Patch(':id/cancel')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('local_owner')
+  async cancel(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: AuthenticatedRequest,
+  ): Promise<Job> {
+    return this.jobService.cancel(request.user.userId, id);
   }
 }
