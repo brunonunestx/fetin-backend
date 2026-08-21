@@ -7,6 +7,7 @@ import {
 import { Job } from '../../generated/prisma/client';
 import { PrismaProvider } from '../../providers/prisma/prisma.provider';
 import { CreateJobDto } from './dto/create-job.dto';
+import { JobListItemDto } from './dto/job-list-item.dto';
 
 @Injectable()
 export class JobService {
@@ -43,11 +44,28 @@ export class JobService {
     });
   }
 
-  async findAll(localId?: string): Promise<Job[]> {
-    return this.prisma.job.findMany({
+  async findAll(localId?: string): Promise<JobListItemDto[]> {
+    const jobs = await this.prisma.job.findMany({
       where: localId ? { localId } : undefined,
       orderBy: { createdAt: 'desc' },
     });
+
+    if (jobs.length === 0) {
+      return [];
+    }
+
+    const subscriptions = await this.prisma.jobSubscription.findMany({
+      where: { jobId: { in: jobs.map((job) => job.id) }, deletedAt: null },
+      select: { jobId: true },
+    });
+    const filledJobIds = new Set(
+      subscriptions.map((subscription) => subscription.jobId),
+    );
+
+    return jobs.map((job) => ({
+      ...job,
+      filled: filledJobIds.has(job.id),
+    }));
   }
 
   async findManyByIds(ids: string[]): Promise<Job[]> {
