@@ -1,4 +1,4 @@
-import { BriefcaseBusiness, House, UserRound } from 'lucide-react';
+import { BriefcaseBusiness, CalendarClock, House, UserRound } from 'lucide-react';
 import { BottomNavigation, type NavigationItem } from '@/components/shared/bottom-navigation';
 import type { UserType } from '@/features/auth/auth-types';
 
@@ -9,6 +9,7 @@ const navigationByUserType: Record<UserType, readonly NavigationItem[]> = {
   ],
   operator: [
     { href: '/trabalhos', icon: BriefcaseBusiness, label: 'Trabalhos' },
+    { href: '/historico', icon: CalendarClock, label: 'Histórico' },
     { href: '/perfil', icon: UserRound, label: 'Perfil' },
   ],
 };

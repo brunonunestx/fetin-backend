@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
+import { acceptedJobsQueryKeys } from '@/features/accepted-jobs/accepted-jobs-query-keys';
 import { acceptJob, getJobAcceptanceStatus } from '@/features/jobs/jobs-api';
 import { jobsQueryKeys } from '@/features/jobs/jobs-query-keys';
 import type { Job } from '@/features/jobs/job-types';
@@ -79,7 +80,10 @@ function useJobAcceptance(jobId: string, userId: string) {
       jobs?.map((job) => (job.id === jobId ? { ...job, filled: true } : job)),
     );
     void queryClient.invalidateQueries({ queryKey: jobsQueryKeys.lists(), refetchType: 'none' });
-  }, [jobId, queryClient, statusQuery.data?.status]);
+    if (statusQuery.data.operatorId === userId) {
+      void queryClient.invalidateQueries({ queryKey: acceptedJobsQueryKeys.all });
+    }
+  }, [jobId, queryClient, statusQuery.data, userId]);
 
   const submitAcceptance = () => {
     if (!isOnline) {

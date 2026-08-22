@@ -55,6 +55,11 @@ async function loadJobDetailsPage() {
   return { Component: JobDetailsPage };
 }
 
+async function loadAcceptedJobsPage() {
+  const { AcceptedJobsPage } = await import('@/features/accepted-jobs/pages/accepted-jobs-page');
+  return { Component: AcceptedJobsPage };
+}
+
 const routes: RouteObject[] = [
   {
     element: <AuthProvider />,
@@ -89,6 +94,7 @@ const routes: RouteObject[] = [
                     lazy: loadJobsListPage,
                   },
                   { path: 'trabalhos/:jobId', lazy: loadJobDetailsPage },
+                  { path: 'historico', lazy: loadAcceptedJobsPage },
                 ],
               },
               {

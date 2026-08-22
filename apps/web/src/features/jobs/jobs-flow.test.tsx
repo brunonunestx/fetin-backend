@@ -2,6 +2,7 @@ import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import AxiosMockAdapter from 'axios-mock-adapter';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { acceptedJobsQueryKeys } from '@/features/accepted-jobs/accepted-jobs-query-keys';
 import { jobsQueryKeys } from '@/features/jobs/jobs-query-keys';
 import type { Job } from '@/features/jobs/job-types';
 import { httpClient } from '@/lib/api/http-client';
@@ -137,6 +138,7 @@ describe('worker job flow', () => {
       .reply(200, { operatorId: workerId, status: 'finished' });
     const { queryClient } = renderApp(`/trabalhos/${availableJob.id}`);
     queryClient.setQueryData(jobsQueryKeys.list(), [availableJob]);
+    queryClient.setQueryData(acceptedJobsQueryKeys.list(), []);
 
     await user.click(await screen.findByRole('button', { name: 'Quero este trabalho' }));
     expect(
@@ -151,6 +153,7 @@ describe('worker job flow', () => {
     await waitFor(() =>
       expect(queryClient.getQueryData<Job[]>(jobsQueryKeys.list())?.[0]?.filled).toBe(true),
     );
+    expect(queryClient.getQueryState(acceptedJobsQueryKeys.list())?.isInvalidated).toBe(true);
   });
 
   it('announces when another worker gets the job first', async () => {

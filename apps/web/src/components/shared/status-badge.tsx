@@ -6,6 +6,8 @@ const statusContent = {
   ended: { label: 'Encerrado', variant: 'outline' },
   filled: { label: 'Preenchido', variant: 'secondary' },
   pending: { label: 'Aguardando', variant: 'warning' },
+  previous: { label: 'Anterior', variant: 'secondary' },
+  upcoming: { label: 'Próximo', variant: 'success' },
 } as const;
 
 type Status = keyof typeof statusContent;
