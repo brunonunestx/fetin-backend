@@ -2,6 +2,8 @@ import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-q
 import { getCurrentUser, login, register } from '@/features/auth/auth-api';
 import { authQueryKeys } from '@/features/auth/auth-query-keys';
 import type { AuthUser, LoginInput, RegisterInput } from '@/features/auth/auth-types';
+import { getOwnProfile } from '@/features/profile/profile-api';
+import { profileQueryKeys } from '@/features/profile/profile-query-keys';
 import { ApiError, isApiError } from '@/lib/api/api-error';
 import { sessionStore } from '@/lib/session-store';
 
@@ -11,10 +13,17 @@ async function establishSession(input: LoginInput, queryClient: QueryClient): Pr
   const accessToken = await login(input);
   sessionStore.setAccessToken(accessToken);
 
-  return queryClient.fetchQuery({
+  const user = await queryClient.fetchQuery({
     queryFn: getCurrentUser,
     queryKey: authQueryKeys.session(),
   });
+
+  await queryClient.fetchQuery({
+    queryFn: getOwnProfile,
+    queryKey: profileQueryKeys.own(),
+  });
+
+  return user;
 }
 
 function useLoginMutation() {

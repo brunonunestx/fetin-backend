@@ -4,6 +4,8 @@ import { Outlet } from 'react-router';
 import { AuthContext, type AuthStatus } from '@/features/auth/auth-context';
 import { getCurrentUser } from '@/features/auth/auth-api';
 import { authQueryKeys } from '@/features/auth/auth-query-keys';
+import { getOwnProfile } from '@/features/profile/profile-api';
+import { profileQueryKeys } from '@/features/profile/profile-query-keys';
 import { sessionStore } from '@/lib/session-store';
 
 function AuthProvider() {
@@ -14,6 +16,12 @@ function AuthProvider() {
     enabled: hasToken,
     queryFn: getCurrentUser,
     queryKey: authQueryKeys.session(),
+  });
+  const shouldLoadProfile = hasToken && Boolean(sessionQuery.data);
+  const profileQuery = useQuery({
+    enabled: shouldLoadProfile,
+    queryFn: getOwnProfile,
+    queryKey: profileQueryKeys.own(),
   });
 
   useEffect(
@@ -27,7 +35,7 @@ function AuthProvider() {
 
         setExitReason(event);
         setHasToken(false);
-        queryClient.removeQueries({ queryKey: authQueryKeys.all });
+        queryClient.clear();
       }),
     [queryClient],
   );
@@ -35,15 +43,16 @@ function AuthProvider() {
   const logout = useCallback(() => sessionStore.clear('signed-out'), []);
   const retrySession = useCallback(() => {
     void sessionQuery.refetch();
-  }, [sessionQuery]);
+    void profileQuery.refetch();
+  }, [profileQuery, sessionQuery]);
 
   let status: AuthStatus = 'anonymous';
 
-  if (hasToken && sessionQuery.isPending) {
+  if (hasToken && (sessionQuery.isPending || (shouldLoadProfile && profileQuery.isPending))) {
     status = 'loading';
-  } else if (hasToken && sessionQuery.isError) {
+  } else if (hasToken && (sessionQuery.isError || profileQuery.isError)) {
     status = 'error';
-  } else if (hasToken && sessionQuery.data) {
+  } else if (hasToken && sessionQuery.data && profileQuery.data) {
     status = 'authenticated';
   }
 
@@ -51,11 +60,12 @@ function AuthProvider() {
     () => ({
       exitReason,
       logout,
+      profile: hasToken ? (profileQuery.data ?? null) : null,
       retrySession,
       status,
       user: hasToken ? (sessionQuery.data ?? null) : null,
     }),
-    [exitReason, hasToken, logout, retrySession, sessionQuery.data, status],
+    [exitReason, hasToken, logout, profileQuery.data, retrySession, sessionQuery.data, status],
   );
 
   return (

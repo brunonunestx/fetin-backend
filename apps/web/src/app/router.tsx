@@ -3,6 +3,8 @@ import { AuthProvider } from '@/features/auth/auth-provider';
 import {
   PublicOnlyRoute,
   RequireAuthentication,
+  RequireCompleteProfile,
+  RequireIncompleteProfile,
   RequireRole,
   RootRedirect,
 } from '@/features/auth/components/route-gates';
@@ -23,11 +25,24 @@ async function loadRegisterPage() {
   return { Component: RegisterPage };
 }
 
-async function loadAuthenticatedPlaceholder(
-  page: 'CompleteProfilePage' | 'OwnerHomePage' | 'WorkerHomePage',
-) {
+async function loadAuthenticatedPlaceholder(page: 'OwnerHomePage' | 'WorkerHomePage') {
   const module = await import('@/features/auth/pages/authenticated-placeholders');
   return { Component: module[page] };
+}
+
+async function loadOnboardingPage() {
+  const { OnboardingPage } = await import('@/features/profile/pages/onboarding-page');
+  return { Component: OnboardingPage };
+}
+
+async function loadMyProfilePage() {
+  const { MyProfilePage } = await import('@/features/profile/pages/my-profile-page');
+  return { Component: MyProfilePage };
+}
+
+async function loadPublicProfilePage() {
+  const { PublicProfilePage } = await import('@/features/profile/pages/public-profile-page');
+  return { Component: PublicProfilePage };
 }
 
 const routes: RouteObject[] = [
@@ -48,24 +63,31 @@ const routes: RouteObject[] = [
         element: <RequireAuthentication />,
         children: [
           {
-            path: 'completar-perfil',
-            lazy: () => loadAuthenticatedPlaceholder('CompleteProfilePage'),
+            element: <RequireIncompleteProfile />,
+            children: [{ path: 'completar-perfil', lazy: loadOnboardingPage }],
           },
           {
-            element: <RequireRole allow="operator" />,
+            element: <RequireCompleteProfile />,
             children: [
+              { path: 'perfil', lazy: loadMyProfilePage },
+              { path: 'perfis/:userId', lazy: loadPublicProfilePage },
               {
-                path: 'trabalhos',
-                lazy: () => loadAuthenticatedPlaceholder('WorkerHomePage'),
+                element: <RequireRole allow="operator" />,
+                children: [
+                  {
+                    path: 'trabalhos',
+                    lazy: () => loadAuthenticatedPlaceholder('WorkerHomePage'),
+                  },
+                ],
               },
-            ],
-          },
-          {
-            element: <RequireRole allow="local_owner" />,
-            children: [
               {
-                path: 'painel',
-                lazy: () => loadAuthenticatedPlaceholder('OwnerHomePage'),
+                element: <RequireRole allow="local_owner" />,
+                children: [
+                  {
+                    path: 'painel',
+                    lazy: () => loadAuthenticatedPlaceholder('OwnerHomePage'),
+                  },
+                ],
               },
             ],
           },

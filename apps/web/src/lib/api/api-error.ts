@@ -14,6 +14,7 @@ const knownMessages: Record<string, string> = {
   INVALID_CREDENTIALS: 'E-mail ou senha incorretos.',
   INVALID_TOKEN: 'Sua sessão venceu. Entre novamente.',
   MISSING_TOKEN: 'Entre na sua conta para continuar.',
+  USER_NOT_FOUND: 'Este perfil não foi encontrado.',
 };
 
 class ApiError extends Error {
@@ -57,6 +58,18 @@ function translateValidationMessage(messages: string[]): string {
 
   if (joinedMessages.includes('type must be one of the following values')) {
     return 'Escolha se você quer trabalhar ou contratar.';
+  }
+
+  if (joinedMessages.includes('phone deve estar no formato E.164')) {
+    return 'Digite um telefone com DDD.';
+  }
+
+  if (joinedMessages.includes('name must be longer than or equal to 2 characters')) {
+    return 'O nome precisa ter pelo menos 2 caracteres.';
+  }
+
+  if (joinedMessages.includes('position must be longer than or equal to 2 characters')) {
+    return 'A profissão precisa ter pelo menos 2 caracteres.';
   }
 
   return 'Confira os dados informados e tente novamente.';

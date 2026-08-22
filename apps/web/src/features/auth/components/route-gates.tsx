@@ -1,13 +1,18 @@
-import { Navigate, Outlet, useLocation } from 'react-router';
+import { Navigate, Outlet } from 'react-router';
 import {
   SessionErrorScreen,
   SessionLoadingScreen,
 } from '@/features/auth/components/session-screen';
 import { homeRouteByUserType, type UserType } from '@/features/auth/auth-types';
 import { useAuth } from '@/features/auth/use-auth';
+import { isProfileComplete } from '@/features/profile/profile-types';
+
+function getAuthenticatedDestination(user: { type: UserType }, profileComplete: boolean) {
+  return profileComplete ? homeRouteByUserType[user.type] : '/completar-perfil';
+}
 
 function RootRedirect() {
-  const { status, user } = useAuth();
+  const { profile, status, user } = useAuth();
 
   if (status === 'loading') {
     return <SessionLoadingScreen />;
@@ -17,12 +22,20 @@ function RootRedirect() {
     return <SessionErrorScreen />;
   }
 
-  return <Navigate replace to={user ? homeRouteByUserType[user.type] : '/boas-vindas'} />;
+  return (
+    <Navigate
+      replace
+      to={
+        user && profile
+          ? getAuthenticatedDestination(user, isProfileComplete(profile))
+          : '/boas-vindas'
+      }
+    />
+  );
 }
 
 function PublicOnlyRoute() {
-  const { status, user } = useAuth();
-  const location = useLocation();
+  const { profile, status, user } = useAuth();
 
   if (status === 'loading') {
     return <SessionLoadingScreen />;
@@ -32,14 +45,35 @@ function PublicOnlyRoute() {
     return <SessionErrorScreen />;
   }
 
-  if (!user) {
+  if (!user || !profile) {
     return <Outlet />;
   }
 
-  const destination =
-    location.pathname === '/cadastro' ? '/completar-perfil' : homeRouteByUserType[user.type];
+  return <Navigate replace to={getAuthenticatedDestination(user, isProfileComplete(profile))} />;
+}
 
-  return <Navigate replace to={destination} />;
+function RequireCompleteProfile() {
+  const { profile, user } = useAuth();
+
+  if (!user || !profile) {
+    return <Navigate replace to="/entrar" />;
+  }
+
+  return isProfileComplete(profile) ? <Outlet /> : <Navigate replace to="/completar-perfil" />;
+}
+
+function RequireIncompleteProfile() {
+  const { profile, user } = useAuth();
+
+  if (!user || !profile) {
+    return <Navigate replace to="/entrar" />;
+  }
+
+  return isProfileComplete(profile) ? (
+    <Navigate replace to={homeRouteByUserType[user.type]} />
+  ) : (
+    <Outlet />
+  );
 }
 
 function RequireAuthentication() {
@@ -81,4 +115,11 @@ function RequireRole({ allow }: { allow: UserType }) {
   );
 }
 
-export { PublicOnlyRoute, RequireAuthentication, RequireRole, RootRedirect };
+export {
+  PublicOnlyRoute,
+  RequireAuthentication,
+  RequireCompleteProfile,
+  RequireIncompleteProfile,
+  RequireRole,
+  RootRedirect,
+};

@@ -1,4 +1,5 @@
 import { CheckCircle2 } from 'lucide-react';
+import { AccountNavigation } from '@/components/shared/account-navigation';
 import { MobileShell } from '@/components/shared/mobile-shell';
 import { PageHeader } from '@/components/shared/page-header';
 import { Badge } from '@/components/ui/badge';
@@ -12,7 +13,11 @@ type AuthenticatedPageProps = {
 };
 
 function AuthenticatedPage({ description, eyebrow, title }: AuthenticatedPageProps) {
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <MobileShell>
@@ -32,6 +37,10 @@ function AuthenticatedPage({ description, eyebrow, title }: AuthenticatedPagePro
           Sair da conta
         </Button>
       </main>
+      <AccountNavigation
+        activeHref={user.type === 'operator' ? '/trabalhos' : '/painel'}
+        type={user.type}
+      />
     </MobileShell>
   );
 }

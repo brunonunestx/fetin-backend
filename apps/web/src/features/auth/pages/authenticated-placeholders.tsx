@@ -1,15 +1,5 @@
 import { AuthenticatedPage } from '@/features/auth/pages/authenticated-page';
 
-function CompleteProfilePage() {
-  return (
-    <AuthenticatedPage
-      description="Sua conta já está protegida e pronta. Na próxima etapa, você informará os dados essenciais do seu perfil."
-      eyebrow="Conta criada"
-      title="Agora falta seu perfil."
-    />
-  );
-}
-
 function WorkerHomePage() {
   return (
     <AuthenticatedPage
@@ -30,4 +20,4 @@ function OwnerHomePage() {
   );
 }
 
-export { CompleteProfilePage, OwnerHomePage, WorkerHomePage };
+export { OwnerHomePage, WorkerHomePage };

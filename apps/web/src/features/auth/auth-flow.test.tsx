@@ -6,6 +6,30 @@ import { httpClient } from '@/lib/api/http-client';
 import { sessionStore } from '@/lib/session-store';
 import { renderApp } from '@/test/render-app';
 
+const incompleteWorkerProfile = {
+  age: null,
+  bio: null,
+  createdAt: '2026-08-22T12:00:00.000Z',
+  email: 'trabalhador@example.com',
+  id: 'user-1',
+  name: null,
+  phone: null,
+  position: null,
+  type: 'operator',
+};
+
+const completeOwnerProfile = {
+  age: null,
+  bio: 'Contratante local',
+  createdAt: '2026-08-22T12:00:00.000Z',
+  email: 'contratante@example.com',
+  id: 'owner-1',
+  name: 'Maria Souza',
+  phone: '+5535999999999',
+  position: null,
+  type: 'local_owner',
+};
+
 describe('authentication flows', () => {
   let mock: AxiosMockAdapter;
 
@@ -34,6 +58,7 @@ describe('authentication flows', () => {
       return [200, { accessToken: 'worker-token' }];
     });
     mock.onGet('/auth/me').reply(200, { type: 'operator', userId: 'user-1' });
+    mock.onGet('/profile').reply(200, incompleteWorkerProfile);
     const { router } = renderApp('/cadastro?tipo=trabalhador');
 
     expect(await screen.findByRole('radio', { name: 'Quero trabalhar' })).toBeChecked();
@@ -41,7 +66,9 @@ describe('authentication flows', () => {
     await user.type(screen.getByLabelText('Crie uma senha'), 'senha-segura');
     await user.click(screen.getByRole('button', { name: 'Criar minha conta' }));
 
-    expect(await screen.findByRole('heading', { name: 'Agora falta seu perfil.' })).toBeVisible();
+    expect(
+      await screen.findByRole('heading', { name: 'Conte qual trabalho você faz.' }),
+    ).toBeVisible();
     expect(router.state.location.pathname).toBe('/completar-perfil');
     expect(sessionStore.getAccessToken()).toBe('worker-token');
   });
@@ -82,6 +109,7 @@ describe('authentication flows', () => {
     const user = userEvent.setup();
     mock.onPost('/auth/login').reply(200, { accessToken: 'owner-token' });
     mock.onGet('/auth/me').reply(200, { type: 'local_owner', userId: 'owner-1' });
+    mock.onGet('/profile').reply(200, completeOwnerProfile);
     const { router } = renderApp('/entrar');
 
     await user.type(await screen.findByLabelText('E-mail'), 'contratante@example.com');
@@ -115,6 +143,7 @@ describe('authentication flows', () => {
   it('redirects a contractor away from worker-only routes', async () => {
     sessionStore.setAccessToken('owner-token');
     mock.onGet('/auth/me').reply(200, { type: 'local_owner', userId: 'owner-1' });
+    mock.onGet('/profile').reply(200, completeOwnerProfile);
     const { router } = renderApp('/trabalhos');
 
     expect(await screen.findByText('Área do contratante')).toBeVisible();
