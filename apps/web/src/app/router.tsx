@@ -60,6 +60,21 @@ async function loadAcceptedJobsPage() {
   return { Component: AcceptedJobsPage };
 }
 
+async function loadLocationsListPage() {
+  const { LocationsListPage } = await import('@/features/locals/pages/locations-list-page');
+  return { Component: LocationsListPage };
+}
+
+async function loadNewLocationPage() {
+  const { NewLocationPage } = await import('@/features/locals/pages/new-location-page');
+  return { Component: NewLocationPage };
+}
+
+async function loadLocationDetailsPage() {
+  const { LocationDetailsPage } = await import('@/features/locals/pages/location-details-page');
+  return { Component: LocationDetailsPage };
+}
+
 const routes: RouteObject[] = [
   {
     element: <AuthProvider />,
@@ -104,6 +119,9 @@ const routes: RouteObject[] = [
                     path: 'painel',
                     lazy: loadOwnerHomePage,
                   },
+                  { path: 'locais', lazy: loadLocationsListPage },
+                  { path: 'locais/novo', lazy: loadNewLocationPage },
+                  { path: 'locais/:locationId', lazy: loadLocationDetailsPage },
                 ],
               },
             ],

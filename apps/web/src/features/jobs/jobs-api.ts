@@ -34,8 +34,14 @@ const acceptanceStatusSchema = z.discriminatedUnion('status', [
   z.object({ operatorId: z.string().min(1), status: z.literal('finished') }),
 ]);
 
-async function listJobs(signal?: AbortSignal): Promise<Job[]> {
-  const response = await httpClient.get<unknown>('/jobs', { signal });
+async function listJobs({
+  localId,
+  signal,
+}: { localId?: string; signal?: AbortSignal } = {}): Promise<Job[]> {
+  const response = await httpClient.get<unknown>('/jobs', {
+    params: localId ? { localId } : undefined,
+    signal,
+  });
   return parseApiResponse(z.array(jobSchema), response.data);
 }
 

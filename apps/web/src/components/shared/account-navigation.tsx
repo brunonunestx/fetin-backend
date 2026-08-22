@@ -1,10 +1,11 @@
-import { BriefcaseBusiness, CalendarClock, House, UserRound } from 'lucide-react';
+import { BriefcaseBusiness, CalendarClock, House, MapPinned, UserRound } from 'lucide-react';
 import { BottomNavigation, type NavigationItem } from '@/components/shared/bottom-navigation';
 import type { UserType } from '@/features/auth/auth-types';
 
 const navigationByUserType: Record<UserType, readonly NavigationItem[]> = {
   local_owner: [
     { href: '/painel', icon: House, label: 'Início' },
+    { href: '/locais', icon: MapPinned, label: 'Locais' },
     { href: '/perfil', icon: UserRound, label: 'Perfil' },
   ],
   operator: [

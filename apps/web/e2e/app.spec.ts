@@ -278,3 +278,109 @@ test('shows the worker accepted-jobs history', async ({ page }) => {
   await expect(page).toHaveURL(new RegExp(`/trabalhos/${upcomingJob.jobId}$`));
   await expect(page.getByRole('heading', { name: upcomingJob.title })).toBeVisible();
 });
+
+test('lets a contractor create a location and see its jobs', async ({ page }) => {
+  const ownerId = '11111111-1111-4111-8111-111111111111';
+  const location = {
+    address: 'Rua das Flores, 120',
+    city: 'Pouso Alegre',
+    createdAt: '2026-08-22T12:00:00.000Z',
+    id: '22222222-2222-4222-8222-222222222222',
+    name: 'Padaria Central',
+    ownerId,
+    state: 'MG',
+    zipCode: '37550-000',
+  };
+  const job = {
+    cancelledAt: null,
+    createdAt: '2026-08-22T12:00:00.000Z',
+    description: 'Ajudar na organização do estoque da padaria.',
+    durationMinutes: 240,
+    filled: false,
+    id: '33333333-3333-4333-8333-333333333333',
+    local: location,
+    localId: location.id,
+    startsAt: '2099-09-15T12:00:00.000Z',
+    title: 'Organizar o estoque',
+    value: '180.50',
+  };
+
+  await page.addInitScript({
+    content: "globalThis.localStorage.setItem('trampofacil.access-token', 'owner-token');",
+  });
+  await page.route('**/api/auth/me', async (route) => {
+    await route.fulfill({
+      body: JSON.stringify({ type: 'local_owner', userId: ownerId }),
+      contentType: 'application/json',
+      status: 200,
+    });
+  });
+  await page.route('**/api/profile', async (route) => {
+    await route.fulfill({
+      body: JSON.stringify({
+        age: null,
+        bio: 'Tenho uma pequena padaria no centro.',
+        createdAt: '2026-08-22T12:00:00.000Z',
+        email: 'maria@example.com',
+        id: ownerId,
+        name: 'Maria Souza',
+        phone: '+5535988887777',
+        position: null,
+        type: 'local_owner',
+      }),
+      contentType: 'application/json',
+      status: 200,
+    });
+  });
+  await page.route('**/api/locals', async (route) => {
+    if (route.request().method() === 'POST') {
+      expect(route.request().postDataJSON()).toEqual({
+        address: location.address,
+        city: location.city,
+        name: location.name,
+        state: location.state,
+        zipCode: location.zipCode,
+      });
+      await route.fulfill({
+        body: JSON.stringify(location),
+        contentType: 'application/json',
+        status: 201,
+      });
+      return;
+    }
+
+    await route.fulfill({ body: '[]', contentType: 'application/json', status: 200 });
+  });
+  await page.route(`**/api/locals/${location.id}`, async (route) => {
+    await route.fulfill({
+      body: JSON.stringify(location),
+      contentType: 'application/json',
+      status: 200,
+    });
+  });
+  await page.route('**/api/jobs?*', async (route) => {
+    expect(new URL(route.request().url()).searchParams.get('localId')).toBe(location.id);
+    await route.fulfill({
+      body: JSON.stringify([job]),
+      contentType: 'application/json',
+      status: 200,
+    });
+  });
+
+  await page.goto('/locais');
+
+  await expect(page.getByText('Nenhum local cadastrado')).toBeVisible();
+  await page.getByRole('button', { name: 'Cadastrar meu primeiro local' }).click();
+  await expect(page.getByLabel('CEP')).toHaveAttribute('inputmode', 'numeric');
+  await page.getByLabel('Nome do local').fill(location.name);
+  await page.getByLabel('Endereço').fill(location.address);
+  await page.getByLabel('Cidade').fill(location.city);
+  await page.getByLabel('CEP').fill('37550000');
+  await page.getByLabel('UF').fill('mg');
+  await page.getByRole('button', { name: 'Cadastrar local' }).click();
+
+  await expect(page).toHaveURL(new RegExp(`/locais/${location.id}$`));
+  await expect(page.getByRole('heading', { name: location.name })).toBeVisible();
+  await expect(page.getByRole('article', { name: job.title })).toBeVisible();
+  await expect(page.getByText('Disponível')).toBeVisible();
+});

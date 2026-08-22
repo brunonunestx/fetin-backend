@@ -18,7 +18,7 @@ function JobsListPage() {
   const { user } = useAuth();
   const [search, setSearch] = useState('');
   const jobsQuery = useQuery({
-    queryFn: ({ signal }) => listJobs(signal),
+    queryFn: ({ signal }) => listJobs({ signal }),
     queryKey: jobsQueryKeys.list(),
   });
   const availableJobs = getAvailableJobs(jobsQuery.data ?? []);

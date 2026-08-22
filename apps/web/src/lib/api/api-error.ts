@@ -15,6 +15,8 @@ const knownMessages: Record<string, string> = {
   INVALID_TOKEN: 'Sua sessão venceu. Entre novamente.',
   JOB_CANCELLED: 'Este trabalho foi cancelado e não pode mais ser aceito.',
   JOB_NOT_FOUND: 'Este trabalho não foi encontrado.',
+  LOCAL_NOT_FOUND: 'Este local não foi encontrado.',
+  LOCAL_NOT_OWNED: 'Este local não pertence à sua conta.',
   MISSING_TOKEN: 'Entre na sua conta para continuar.',
   USER_NOT_FOUND: 'Este perfil não foi encontrado.',
 };
