@@ -306,6 +306,7 @@ Quando mais de uma regra for verdadeira, **cancelada** tem prioridade sobre **pr
 | `POST /auth/login` | Obter o JWT. |
 | `GET /auth/me` | Identificar usuário e tipo da conta. |
 | `GET /profile` | Consultar o próprio perfil. |
+| `GET /profile/:id` | Consultar os dados públicos de outra pessoa. |
 | `PATCH /profile` | Completar ou editar o próprio perfil. |
 | `GET /locals` | Listar locais do contratante. |
 | `GET /locals/:id` | Consultar um local do contratante. |
@@ -319,12 +320,12 @@ Quando mais de uma regra for verdadeira, **cancelada** tem prioridade sobre **pr
 | `GET /jobs/:id/accepted` | Consultar o resultado do aceite. |
 | `GET /me/accepted-jobs` | Consultar os trabalhos conquistados. |
 
-### Ajustes mínimos necessários no backend
+### Ajustes do backend concluídos para o frontend
 
-1. **Perfil por ID:** disponibilizar uma consulta autenticada contendo `id`, tipo, nome, profissão e apresentação. E-mail, senha e telefone não serão expostos nessa visualização do MVP.
-2. **Resumo do local na vaga:** retornar nome, endereço, cidade, UF, CEP e identificação do contratante junto da listagem e dos detalhes necessários ao trabalhador.
-3. **Local no histórico:** incluir o resumo do local nos trabalhos aceitos para que o trabalhador não receba somente um UUID.
-4. **CORS configurável:** necessário apenas se a versão publicada do frontend acessar a API em outra origem. Em desenvolvimento, o proxy do Vite evitará essa dependência.
+1. **Perfil por ID:** `GET /profile/:id` é autenticado e retorna somente `id`, tipo, nome, profissão e apresentação. E-mail, senha e telefone não são consultados nem expostos nessa visualização.
+2. **Resumo do local na vaga:** listagem e detalhes retornam nome, endereço, cidade, UF, CEP e identificação do contratante no campo `local`.
+3. **Local no histórico:** trabalhos aceitos incluem o mesmo resumo de local, permitindo exibir o endereço e acessar o perfil do contratante sem manipular UUIDs manualmente.
+4. **CORS configurável:** a API permanece sem CORS quando `CORS_ORIGIN` não está definida. Em uma publicação com origens diferentes, a variável aceita uma ou mais origens separadas por vírgula. Em desenvolvimento, o proxy do Vite evita essa configuração.
 
 Não será criado um cliente gerado por OpenAPI neste MVP. Os contratos usados pelo frontend serão tipados e validados na fronteira do cliente Axios.
 

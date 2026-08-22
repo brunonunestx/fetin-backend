@@ -17,7 +17,7 @@ import type { AuthenticatedRequest } from '../../common/types/authenticated-requ
 import { Job } from '../../generated/prisma/client';
 import { CreateJobDto } from './dto/create-job.dto';
 import { FindJobsDto } from './dto/find-jobs.dto';
-import { JobListItemDto } from './dto/job-list-item.dto';
+import { JobResponseDto } from './dto/job-response.dto';
 import { JobService } from './job.service';
 
 @Controller('jobs')
@@ -35,13 +35,15 @@ export class JobController {
   }
 
   @Get()
-  async findAll(@Query() query: FindJobsDto): Promise<JobListItemDto[]> {
+  async findAll(@Query() query: FindJobsDto): Promise<JobResponseDto[]> {
     return this.jobService.findAll(query.localId);
   }
 
   @Get(':id')
-  async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<Job> {
-    return this.jobService.findById(id);
+  async findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<JobResponseDto> {
+    return this.jobService.findDetailsById(id);
   }
 
   @Patch(':id/cancel')

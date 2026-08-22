@@ -27,10 +27,16 @@ export class JobSubscriptionProcessor extends WorkerHost {
     const { jobId, operatorId } = job.data;
 
     const lockKey = RedisKeyBuilder.getLockKey(jobId);
-    const acquiredLock = await this.redis.lock(lockKey, operatorId, LOCK_TTL_MS);
+    const acquiredLock = await this.redis.lock(
+      lockKey,
+      operatorId,
+      LOCK_TTL_MS,
+    );
 
     if (!acquiredLock) {
-      this.logger.log(`Operator ${operatorId} lost the race for job ${jobId}: lock not acquired`);
+      this.logger.log(
+        `Operator ${operatorId} lost the race for job ${jobId}: lock not acquired`,
+      );
       return;
     }
 
@@ -57,7 +63,9 @@ export class JobSubscriptionProcessor extends WorkerHost {
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === UNIQUE_CONSTRAINT_VIOLATION
       ) {
-        this.logger.log(`Operator ${operatorId} lost the race for job ${jobId}: already subscribed`);
+        this.logger.log(
+          `Operator ${operatorId} lost the race for job ${jobId}: already subscribed`,
+        );
         return;
       }
 

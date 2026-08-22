@@ -1,4 +1,8 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { JobService } from '../job/job.service';
 import { PrismaProvider } from '../../providers/prisma/prisma.provider';
 import { RedisKeyBuilder } from '../../providers/redis/redis.key-builder';
@@ -12,6 +16,7 @@ import {
   JobSubscriptionJobData,
   JobSubscriptionPublisher,
 } from './job-subscription.publisher';
+import { toLocalSummary } from '../local/dto/local-summary.dto';
 
 @Injectable()
 export class JobSubscriptionService {
@@ -73,13 +78,31 @@ export class JobSubscriptionService {
     const jobs = await this.jobService.findManyByIds(
       subscriptions.map((subscription) => subscription.jobId),
     );
+
+    if (jobs.length === 0) {
+      return [];
+    }
+
     const jobsById = new Map(jobs.map((job) => [job.id, job]));
+    const locals = await this.prisma.local.findMany({
+      where: { id: { in: [...new Set(jobs.map((job) => job.localId))] } },
+    });
+    const localsById = new Map(locals.map((local) => [local.id, local]));
 
     return subscriptions.flatMap((subscription) => {
       const job = jobsById.get(subscription.jobId);
 
       if (!job) {
         return [];
+      }
+
+      const local = localsById.get(job.localId);
+
+      if (!local) {
+        throw new NotFoundException({
+          code: 'LOCAL_NOT_FOUND',
+          message: 'Local não encontrado',
+        });
       }
 
       return [
@@ -89,8 +112,10 @@ export class JobSubscriptionService {
           description: job.description,
           startsAt: job.startsAt,
           durationMinutes: job.durationMinutes,
-          value: job.value,
+          value: job.value.toFixed(2),
           localId: job.localId,
+          local: toLocalSummary(local),
+          cancelledAt: job.cancelledAt,
           acceptedAt: subscription.createdAt,
         },
       ];

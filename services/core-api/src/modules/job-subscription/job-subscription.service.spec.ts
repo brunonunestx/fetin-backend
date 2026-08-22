@@ -1,5 +1,10 @@
 import { ConflictException } from '@nestjs/common';
-import { Job, JobSubscription, Prisma } from '../../generated/prisma/client';
+import {
+  Job,
+  JobSubscription,
+  Local,
+  Prisma,
+} from '../../generated/prisma/client';
 import { PrismaProvider } from '../../providers/prisma/prisma.provider';
 import { RedisProvider } from '../../providers/redis/redis.provider';
 import { JobService } from '../job/job.service';
@@ -35,10 +40,27 @@ function createSubscription(
   };
 }
 
+function createLocal(overrides: Partial<Local> = {}): Local {
+  return {
+    id: 'local-1',
+    ownerId: 'owner-1',
+    name: 'Restaurante Central',
+    address: 'Rua Um, 100',
+    city: 'São Paulo',
+    state: 'SP',
+    zipCode: '01310-100',
+    createdAt: new Date('2024-01-01T00:00:00.000Z'),
+    ...overrides,
+  };
+}
+
 function createDeps(): {
   publisher: { publish: jest.Mock };
   redis: { get: jest.Mock };
-  prisma: { jobSubscription: { findUnique: jest.Mock; findMany: jest.Mock } };
+  prisma: {
+    jobSubscription: { findUnique: jest.Mock; findMany: jest.Mock };
+    local: { findMany: jest.Mock };
+  };
   jobService: { findById: jest.Mock; findManyByIds: jest.Mock };
 } {
   return {
@@ -47,6 +69,9 @@ function createDeps(): {
     prisma: {
       jobSubscription: {
         findUnique: jest.fn(),
+        findMany: jest.fn(),
+      },
+      local: {
         findMany: jest.fn(),
       },
     },
@@ -145,19 +170,25 @@ describe('JobSubscriptionService', () => {
 
       expect(result).toEqual([]);
       expect(deps.jobService.findManyByIds).not.toHaveBeenCalled();
+      expect(deps.prisma.local.findMany).not.toHaveBeenCalled();
     });
 
-    it('returns the accepted jobs combined with subscription data', async () => {
+    it('returns accepted jobs with subscription and local data', async () => {
       const deps = createDeps();
       const subscription = createSubscription();
       const job = createJob();
+      const local = createLocal();
       deps.prisma.jobSubscription.findMany.mockResolvedValue([subscription]);
       deps.jobService.findManyByIds.mockResolvedValue([job]);
+      deps.prisma.local.findMany.mockResolvedValue([local]);
       const service = createService(deps);
 
       const result = await service.findAcceptedByOperator('operator-1');
 
       expect(deps.jobService.findManyByIds).toHaveBeenCalledWith(['job-1']);
+      expect(deps.prisma.local.findMany).toHaveBeenCalledWith({
+        where: { id: { in: ['local-1'] } },
+      });
       expect(result).toEqual([
         {
           jobId: job.id,
@@ -165,8 +196,18 @@ describe('JobSubscriptionService', () => {
           description: job.description,
           startsAt: job.startsAt,
           durationMinutes: job.durationMinutes,
-          value: job.value,
+          value: '150.00',
           localId: job.localId,
+          local: {
+            id: local.id,
+            ownerId: local.ownerId,
+            name: local.name,
+            address: local.address,
+            city: local.city,
+            state: local.state,
+            zipCode: local.zipCode,
+          },
+          cancelledAt: null,
           acceptedAt: subscription.createdAt,
         },
       ]);
@@ -182,6 +223,21 @@ describe('JobSubscriptionService', () => {
       const result = await service.findAcceptedByOperator('operator-1');
 
       expect(result).toEqual([]);
+      expect(deps.prisma.local.findMany).not.toHaveBeenCalled();
+    });
+
+    it('throws 404 when an accepted job references a missing local', async () => {
+      const deps = createDeps();
+      deps.prisma.jobSubscription.findMany.mockResolvedValue([
+        createSubscription(),
+      ]);
+      deps.jobService.findManyByIds.mockResolvedValue([createJob()]);
+      deps.prisma.local.findMany.mockResolvedValue([]);
+      const service = createService(deps);
+
+      await expect(
+        service.findAcceptedByOperator('operator-1'),
+      ).rejects.toThrow('Local não encontrado');
     });
   });
 });

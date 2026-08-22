@@ -21,7 +21,12 @@ function sanitize(value: unknown): unknown {
 
 @Injectable()
 export class JsonLoggerService implements LoggerService {
-  private write(level: LogLevel, message: unknown, context?: string, extra?: unknown) {
+  private write(
+    level: LogLevel,
+    message: unknown,
+    context?: string,
+    extra?: unknown,
+  ) {
     const entry = {
       timestamp: new Date().toISOString(),
       level,

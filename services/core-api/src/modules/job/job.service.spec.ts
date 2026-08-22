@@ -38,17 +38,18 @@ function createJob(overrides: Partial<Job> = {}): Job {
 }
 
 function createPrismaMock(): {
-  local: { findUnique: jest.Mock };
+  local: { findMany: jest.Mock; findUnique: jest.Mock };
   job: {
     create: jest.Mock;
     findMany: jest.Mock;
     findUnique: jest.Mock;
     update: jest.Mock;
   };
-  jobSubscription: { findMany: jest.Mock };
+  jobSubscription: { findMany: jest.Mock; findUnique: jest.Mock };
 } {
   return {
     local: {
+      findMany: jest.fn(),
       findUnique: jest.fn(),
     },
     job: {
@@ -59,6 +60,31 @@ function createPrismaMock(): {
     },
     jobSubscription: {
       findMany: jest.fn(),
+      findUnique: jest.fn(),
+    },
+  };
+}
+
+function expectedJobResponse(job: Job, local: Local, filled: boolean) {
+  return {
+    id: job.id,
+    localId: job.localId,
+    title: job.title,
+    description: job.description,
+    startsAt: job.startsAt,
+    durationMinutes: job.durationMinutes,
+    value: job.value.toFixed(2),
+    createdAt: job.createdAt,
+    cancelledAt: job.cancelledAt,
+    filled,
+    local: {
+      id: local.id,
+      ownerId: local.ownerId,
+      name: local.name,
+      address: local.address,
+      city: local.city,
+      state: local.state,
+      zipCode: local.zipCode,
     },
   };
 }
@@ -129,13 +155,16 @@ describe('JobService', () => {
 
       expect(result).toEqual([]);
       expect(prisma.jobSubscription.findMany).not.toHaveBeenCalled();
+      expect(prisma.local.findMany).not.toHaveBeenCalled();
     });
 
-    it('returns all jobs marked as not filled when there is no active subscription', async () => {
+    it('returns jobs with their local summary and filled state', async () => {
       const prisma = createPrismaMock();
       const jobs = [createJob()];
+      const local = createLocal();
       prisma.job.findMany.mockResolvedValue(jobs);
       prisma.jobSubscription.findMany.mockResolvedValue([]);
+      prisma.local.findMany.mockResolvedValue([local]);
       const service = new JobService(prisma as unknown as PrismaProvider);
 
       const result = await service.findAll();
@@ -148,21 +177,24 @@ describe('JobService', () => {
         where: { jobId: { in: ['job-1'] }, deletedAt: null },
         select: { jobId: true },
       });
-      expect(result).toEqual([{ ...jobs[0], filled: false }]);
+      expect(prisma.local.findMany).toHaveBeenCalledWith({
+        where: { id: { in: ['local-1'] } },
+      });
+      expect(result).toEqual([expectedJobResponse(jobs[0], local, false)]);
     });
 
     it('marks jobs with an active subscription as filled', async () => {
       const prisma = createPrismaMock();
       const jobs = [createJob()];
+      const local = createLocal();
       prisma.job.findMany.mockResolvedValue(jobs);
-      prisma.jobSubscription.findMany.mockResolvedValue([
-        { jobId: 'job-1' },
-      ]);
+      prisma.jobSubscription.findMany.mockResolvedValue([{ jobId: 'job-1' }]);
+      prisma.local.findMany.mockResolvedValue([local]);
       const service = new JobService(prisma as unknown as PrismaProvider);
 
       const result = await service.findAll();
 
-      expect(result).toEqual([{ ...jobs[0], filled: true }]);
+      expect(result).toEqual([expectedJobResponse(jobs[0], local, true)]);
     });
 
     it('filters jobs by localId when provided', async () => {
@@ -170,6 +202,7 @@ describe('JobService', () => {
       const jobs = [createJob()];
       prisma.job.findMany.mockResolvedValue(jobs);
       prisma.jobSubscription.findMany.mockResolvedValue([]);
+      prisma.local.findMany.mockResolvedValue([createLocal()]);
       const service = new JobService(prisma as unknown as PrismaProvider);
 
       await service.findAll('local-1');
@@ -178,6 +211,16 @@ describe('JobService', () => {
         where: { localId: 'local-1' },
         orderBy: { createdAt: 'desc' },
       });
+    });
+
+    it('throws 404 when a job references a missing local', async () => {
+      const prisma = createPrismaMock();
+      prisma.job.findMany.mockResolvedValue([createJob()]);
+      prisma.jobSubscription.findMany.mockResolvedValue([]);
+      prisma.local.findMany.mockResolvedValue([]);
+      const service = new JobService(prisma as unknown as PrismaProvider);
+
+      await expect(service.findAll()).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -225,6 +268,56 @@ describe('JobService', () => {
       const service = new JobService(prisma as unknown as PrismaProvider);
 
       await expect(service.findById('missing-job')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
+
+  describe('findDetailsById', () => {
+    it('returns the job enriched with its local and active subscription state', async () => {
+      const prisma = createPrismaMock();
+      const job = createJob();
+      const local = createLocal();
+      prisma.job.findUnique.mockResolvedValue(job);
+      prisma.local.findUnique.mockResolvedValue(local);
+      prisma.jobSubscription.findUnique.mockResolvedValue({
+        deletedAt: null,
+      });
+      const service = new JobService(prisma as unknown as PrismaProvider);
+
+      const result = await service.findDetailsById('job-1');
+
+      expect(prisma.jobSubscription.findUnique).toHaveBeenCalledWith({
+        where: { jobId: 'job-1' },
+        select: { deletedAt: true },
+      });
+      expect(result).toEqual(expectedJobResponse(job, local, true));
+    });
+
+    it('does not mark a job as filled when its subscription was deleted', async () => {
+      const prisma = createPrismaMock();
+      const job = createJob();
+      const local = createLocal();
+      prisma.job.findUnique.mockResolvedValue(job);
+      prisma.local.findUnique.mockResolvedValue(local);
+      prisma.jobSubscription.findUnique.mockResolvedValue({
+        deletedAt: new Date(),
+      });
+      const service = new JobService(prisma as unknown as PrismaProvider);
+
+      const result = await service.findDetailsById('job-1');
+
+      expect(result.filled).toBe(false);
+    });
+
+    it('throws 404 when the job local cannot be found', async () => {
+      const prisma = createPrismaMock();
+      prisma.job.findUnique.mockResolvedValue(createJob());
+      prisma.local.findUnique.mockResolvedValue(null);
+      prisma.jobSubscription.findUnique.mockResolvedValue(null);
+      const service = new JobService(prisma as unknown as PrismaProvider);
+
+      await expect(service.findDetailsById('job-1')).rejects.toThrow(
         NotFoundException,
       );
     });

@@ -1,14 +1,15 @@
 import { LocalSummaryDto } from '../../local/dto/local-summary.dto';
 
-export class AcceptedJobDto {
-  jobId!: string;
+export class JobResponseDto {
+  id!: string;
+  localId!: string;
   title!: string;
   description!: string;
   startsAt!: Date;
   durationMinutes!: number;
   value!: string;
-  localId!: string;
-  local!: LocalSummaryDto;
+  createdAt!: Date;
   cancelledAt!: Date | null;
-  acceptedAt!: Date;
+  filled!: boolean;
+  local!: LocalSummaryDto;
 }

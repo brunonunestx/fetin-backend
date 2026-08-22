@@ -28,7 +28,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     const payload = this.buildPayload(exception, correlationId);
 
-    if (payload.statusCode >= HttpStatus.INTERNAL_SERVER_ERROR) {
+    if (payload.statusCode >= Number(HttpStatus.INTERNAL_SERVER_ERROR)) {
       this.logger.error(
         `${request.method} ${request.url} -> ${payload.statusCode} ${payload.code}`,
         exception instanceof Error ? exception.stack : undefined,
@@ -63,8 +63,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       return {
         statusCode: status,
         code: (responseObject.code as string) ?? exception.name,
-        message:
-          (responseObject.message as string) ?? exception.message,
+        message: (responseObject.message as string) ?? exception.message,
         correlationId,
       };
     }

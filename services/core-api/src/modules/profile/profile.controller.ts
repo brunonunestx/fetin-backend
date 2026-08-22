@@ -1,7 +1,17 @@
-import { Body, Controller, Get, Patch, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import type { AuthenticatedRequest } from '../../common/types/authenticated-request';
 import { ProfileResponseDto } from './dto/profile-response.dto';
+import { PublicProfileResponseDto } from './dto/public-profile-response.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ProfileService } from './profile.service';
 
@@ -15,6 +25,13 @@ export class ProfileController {
     @Req() request: AuthenticatedRequest,
   ): Promise<ProfileResponseDto> {
     return this.profileService.getProfile(request.user.userId);
+  }
+
+  @Get(':id')
+  async getPublicProfile(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<PublicProfileResponseDto> {
+    return this.profileService.getPublicProfile(id);
   }
 
   @Patch()

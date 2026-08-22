@@ -67,6 +67,48 @@ describe('ProfileService', () => {
     });
   });
 
+  describe('getPublicProfile', () => {
+    it('selects and returns only fields safe for another user to view', async () => {
+      const prisma = createPrismaMock();
+      const publicProfile = {
+        id: 'user-1',
+        type: UserType.operator,
+        name: 'Operator One',
+        position: 'Garçom',
+        bio: 'Bio',
+      };
+      prisma.user.findUnique.mockResolvedValue(publicProfile);
+      const service = new ProfileService(prisma as unknown as PrismaProvider);
+
+      const result = await service.getPublicProfile('user-1');
+
+      expect(prisma.user.findUnique).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        select: {
+          id: true,
+          type: true,
+          name: true,
+          position: true,
+          bio: true,
+        },
+      });
+      expect(result).toEqual(publicProfile);
+      expect(result).not.toHaveProperty('email');
+      expect(result).not.toHaveProperty('phone');
+      expect(result).not.toHaveProperty('passwordHash');
+    });
+
+    it('throws 404 when the public profile does not exist', async () => {
+      const prisma = createPrismaMock();
+      prisma.user.findUnique.mockResolvedValue(null);
+      const service = new ProfileService(prisma as unknown as PrismaProvider);
+
+      await expect(service.getPublicProfile('missing-user')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
+
   describe('updateProfile', () => {
     it('returns the mapped profile after a successful update', async () => {
       const prisma = createPrismaMock();

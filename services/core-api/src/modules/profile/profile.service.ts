@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, User } from '../../generated/prisma/client';
 import { PrismaProvider } from '../../providers/prisma/prisma.provider';
 import { ProfileResponseDto } from './dto/profile-response.dto';
+import { PublicProfileResponseDto } from './dto/public-profile-response.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 
 const RECORD_NOT_FOUND = 'P2025';
@@ -21,6 +22,28 @@ export class ProfileService {
     }
 
     return this.toProfileResponse(user);
+  }
+
+  async getPublicProfile(userId: string): Promise<PublicProfileResponseDto> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        type: true,
+        name: true,
+        position: true,
+        bio: true,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException({
+        code: 'USER_NOT_FOUND',
+        message: 'Usuário não encontrado',
+      });
+    }
+
+    return user;
   }
 
   async updateProfile(
