@@ -1,15 +1,5 @@
 import { AuthenticatedPage } from '@/features/auth/pages/authenticated-page';
 
-function WorkerHomePage() {
-  return (
-    <AuthenticatedPage
-      description="Sua sessão de trabalhador está ativa. A lista de oportunidades será conectada na etapa de trabalhos."
-      eyebrow="Área do trabalhador"
-      title="Você entrou no TrampoFácil."
-    />
-  );
-}
-
 function OwnerHomePage() {
   return (
     <AuthenticatedPage
@@ -20,4 +10,4 @@ function OwnerHomePage() {
   );
 }
 
-export { OwnerHomePage, WorkerHomePage };
+export { OwnerHomePage };

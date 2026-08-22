@@ -63,6 +63,7 @@ describe('profile flows', () => {
 
       return [200, completedProfile];
     });
+    mock.onGet('/jobs').reply(200, []);
     const { router } = renderApp('/trabalhos');
 
     expect(
@@ -75,7 +76,7 @@ describe('profile flows', () => {
     await user.type(screen.getByLabelText('Sua profissão'), 'Pedreiro');
     await user.click(screen.getByRole('button', { name: 'Concluir meu perfil' }));
 
-    expect(await screen.findByText('Área do trabalhador')).toBeVisible();
+    expect(await screen.findByText('Nenhum trabalho disponível agora')).toBeVisible();
     await waitFor(() => expect(router.state.location.pathname).toBe('/trabalhos'));
   });
 

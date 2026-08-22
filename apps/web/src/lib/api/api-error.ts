@@ -13,6 +13,8 @@ const knownMessages: Record<string, string> = {
   FORBIDDEN_USER_TYPE: 'Esta conta não pode acessar essa área.',
   INVALID_CREDENTIALS: 'E-mail ou senha incorretos.',
   INVALID_TOKEN: 'Sua sessão venceu. Entre novamente.',
+  JOB_CANCELLED: 'Este trabalho foi cancelado e não pode mais ser aceito.',
+  JOB_NOT_FOUND: 'Este trabalho não foi encontrado.',
   MISSING_TOKEN: 'Entre na sua conta para continuar.',
   USER_NOT_FOUND: 'Este perfil não foi encontrado.',
 };

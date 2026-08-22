@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 const statusContent = {
   available: { label: 'Disponível', variant: 'success' },
   cancelled: { label: 'Cancelado', variant: 'destructive' },
+  ended: { label: 'Encerrado', variant: 'outline' },
   filled: { label: 'Preenchido', variant: 'secondary' },
   pending: { label: 'Aguardando', variant: 'warning' },
 } as const;

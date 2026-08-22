@@ -25,9 +25,9 @@ async function loadRegisterPage() {
   return { Component: RegisterPage };
 }
 
-async function loadAuthenticatedPlaceholder(page: 'OwnerHomePage' | 'WorkerHomePage') {
+async function loadOwnerHomePage() {
   const module = await import('@/features/auth/pages/authenticated-placeholders');
-  return { Component: module[page] };
+  return { Component: module.OwnerHomePage };
 }
 
 async function loadOnboardingPage() {
@@ -43,6 +43,16 @@ async function loadMyProfilePage() {
 async function loadPublicProfilePage() {
   const { PublicProfilePage } = await import('@/features/profile/pages/public-profile-page');
   return { Component: PublicProfilePage };
+}
+
+async function loadJobsListPage() {
+  const { JobsListPage } = await import('@/features/jobs/pages/jobs-list-page');
+  return { Component: JobsListPage };
+}
+
+async function loadJobDetailsPage() {
+  const { JobDetailsPage } = await import('@/features/jobs/pages/job-details-page');
+  return { Component: JobDetailsPage };
 }
 
 const routes: RouteObject[] = [
@@ -76,8 +86,9 @@ const routes: RouteObject[] = [
                 children: [
                   {
                     path: 'trabalhos',
-                    lazy: () => loadAuthenticatedPlaceholder('WorkerHomePage'),
+                    lazy: loadJobsListPage,
                   },
+                  { path: 'trabalhos/:jobId', lazy: loadJobDetailsPage },
                 ],
               },
               {
@@ -85,7 +96,7 @@ const routes: RouteObject[] = [
                 children: [
                   {
                     path: 'painel',
-                    lazy: () => loadAuthenticatedPlaceholder('OwnerHomePage'),
+                    lazy: loadOwnerHomePage,
                   },
                 ],
               },
