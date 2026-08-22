@@ -1,5 +1,6 @@
 import { ArrowLeft } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { Link } from 'react-router';
 import { Brand } from '@/components/shared/brand';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -21,9 +22,9 @@ function PageHeader({ action, backHref, className, title }: PageHeaderProps) {
     >
       {backHref ? (
         <Button aria-label="Voltar" asChild size="icon" variant="ghost">
-          <a href={backHref}>
+          <Link to={backHref}>
             <ArrowLeft aria-hidden="true" />
-          </a>
+          </Link>
         </Button>
       ) : (
         <Brand compact />

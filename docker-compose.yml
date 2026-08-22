@@ -28,6 +28,8 @@ services:
       dockerfile: core-api/Dockerfile
     environment:
       DATABASE_URL: postgresql://user:password@postgres:5432/core_api?schema=public
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-3600}
+      JWT_SECRET: ${JWT_SECRET:-trampofacil-local-development-secret}
       REDIS_URL: redis://redis:6379
     ports: ["3000:3000"]
     depends_on:

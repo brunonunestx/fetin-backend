@@ -1,4 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
+import { Link } from 'react-router';
 import { cn } from '@/lib/utils';
 
 type NavigationItem = {
@@ -23,7 +24,7 @@ function BottomNavigation({ activeHref, items }: BottomNavigationProps) {
         const isActive = href === activeHref;
 
         return (
-          <a
+          <Link
             aria-current={isActive ? 'page' : undefined}
             className={cn(
               'flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-xl px-2 text-xs font-bold outline-none focus-visible:ring-[3px] focus-visible:ring-ring/30',
@@ -31,12 +32,12 @@ function BottomNavigation({ activeHref, items }: BottomNavigationProps) {
                 ? 'text-primary'
                 : 'text-muted-foreground hover:bg-muted hover:text-foreground',
             )}
-            href={href}
             key={href}
+            to={href}
           >
             <Icon aria-hidden="true" className="size-6" strokeWidth={isActive ? 2.75 : 2} />
             <span className="max-w-full truncate">{label}</span>
-          </a>
+          </Link>
         );
       })}
     </nav>

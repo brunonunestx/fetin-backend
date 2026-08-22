@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { BriefcaseBusiness, House, UserRound } from 'lucide-react';
+import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { BottomNavigation } from '@/components/shared/bottom-navigation';
 
@@ -11,7 +12,11 @@ const items = [
 
 describe('BottomNavigation', () => {
   it('marks the current destination accessibly', () => {
-    render(<BottomNavigation activeHref="/servicos" items={items} />);
+    render(
+      <MemoryRouter>
+        <BottomNavigation activeHref="/servicos" items={items} />
+      </MemoryRouter>,
+    );
 
     expect(screen.getByRole('navigation', { name: 'Navegação principal' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Serviços' })).toHaveAttribute('aria-current', 'page');
