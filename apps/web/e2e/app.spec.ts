@@ -279,8 +279,9 @@ test('shows the worker accepted-jobs history', async ({ page }) => {
   await expect(page.getByRole('heading', { name: upcomingJob.title })).toBeVisible();
 });
 
-test('lets a contractor create a location and see its jobs', async ({ page }) => {
+test('lets a contractor create a location and publish its first job', async ({ page }) => {
   const ownerId = '11111111-1111-4111-8111-111111111111';
+  const startsAtLocal = '2099-09-15T09:30';
   const location = {
     address: 'Rua das Flores, 120',
     city: 'Pouso Alegre',
@@ -291,19 +292,19 @@ test('lets a contractor create a location and see its jobs', async ({ page }) =>
     state: 'MG',
     zipCode: '37550-000',
   };
-  const job = {
+  const createdJob = {
     cancelledAt: null,
     createdAt: '2026-08-22T12:00:00.000Z',
     description: 'Ajudar na organização do estoque da padaria.',
     durationMinutes: 240,
-    filled: false,
     id: '33333333-3333-4333-8333-333333333333',
-    local: location,
     localId: location.id,
-    startsAt: '2099-09-15T12:00:00.000Z',
+    startsAt: new Date(startsAtLocal).toISOString(),
     title: 'Organizar o estoque',
     value: '180.50',
   };
+  const job = { ...createdJob, filled: false, local: location };
+  let locationCreated = false;
 
   await page.addInitScript({
     content: "globalThis.localStorage.setItem('trampofacil.access-token', 'owner-token');",
@@ -346,10 +347,15 @@ test('lets a contractor create a location and see its jobs', async ({ page }) =>
         contentType: 'application/json',
         status: 201,
       });
+      locationCreated = true;
       return;
     }
 
-    await route.fulfill({ body: '[]', contentType: 'application/json', status: 200 });
+    await route.fulfill({
+      body: JSON.stringify(locationCreated ? [location] : []),
+      contentType: 'application/json',
+      status: 200,
+    });
   });
   await page.route(`**/api/locals/${location.id}`, async (route) => {
     await route.fulfill({
@@ -360,8 +366,34 @@ test('lets a contractor create a location and see its jobs', async ({ page }) =>
   });
   await page.route('**/api/jobs?*', async (route) => {
     expect(new URL(route.request().url()).searchParams.get('localId')).toBe(location.id);
+    await route.fulfill({ body: '[]', contentType: 'application/json', status: 200 });
+  });
+  await page.route('**/api/jobs', async (route) => {
+    expect(route.request().method()).toBe('POST');
+    expect(route.request().postDataJSON()).toEqual({
+      description: createdJob.description,
+      durationMinutes: createdJob.durationMinutes,
+      localId: location.id,
+      startsAt: createdJob.startsAt,
+      title: createdJob.title,
+      value: 180.5,
+    });
     await route.fulfill({
-      body: JSON.stringify([job]),
+      body: JSON.stringify(createdJob),
+      contentType: 'application/json',
+      status: 201,
+    });
+  });
+  await page.route(`**/api/jobs/${job.id}`, async (route) => {
+    await route.fulfill({
+      body: JSON.stringify(job),
+      contentType: 'application/json',
+      status: 200,
+    });
+  });
+  await page.route(`**/api/jobs/${job.id}/accepted`, async (route) => {
+    await route.fulfill({
+      body: JSON.stringify({ status: 'pending' }),
       contentType: 'application/json',
       status: 200,
     });
@@ -381,8 +413,21 @@ test('lets a contractor create a location and see its jobs', async ({ page }) =>
 
   await expect(page).toHaveURL(new RegExp(`/locais/${location.id}$`));
   await expect(page.getByRole('heading', { name: location.name })).toBeVisible();
-  await expect(page.getByRole('article', { name: job.title })).toBeVisible();
-  await expect(page.getByText('Disponível')).toBeVisible();
+  await page.getByRole('link', { name: 'Publicar vaga neste local' }).click();
+
+  await expect(page.getByRole('radio', { name: /Padaria Central/ })).toBeChecked();
+  await page.getByLabel('Título do trabalho').fill(createdJob.title);
+  await page.getByLabel('O que precisa ser feito?').fill(createdJob.description);
+  await page.getByRole('button', { name: 'Continuar' }).click();
+  await page.getByLabel('Data e horário').fill(startsAtLocal);
+  await page.getByLabel('Duração estimada em horas').fill('4');
+  await page.getByRole('button', { name: 'Continuar' }).click();
+  await page.getByLabel('Valor total').fill('180,50');
+  await page.getByRole('button', { name: 'Continuar' }).click();
+  await page.getByRole('button', { name: 'Publicar vaga' }).click();
+
+  await expect(page).toHaveURL(new RegExp(`/painel/vagas/${job.id}$`));
+  await expect(page.getByRole('heading', { name: job.title })).toBeVisible();
 });
 
 test('lets a contractor publish, review and cancel a job', async ({ page }) => {

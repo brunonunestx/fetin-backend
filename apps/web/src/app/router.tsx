@@ -1,4 +1,5 @@
 import { createBrowserRouter, createMemoryRouter, Navigate, type RouteObject } from 'react-router';
+import { AppRouteRoot } from '@/app/route-focus-manager';
 import { AuthProvider } from '@/features/auth/auth-provider';
 import {
   PublicOnlyRoute,
@@ -87,7 +88,11 @@ async function loadOwnerJobDetailsPage() {
 
 const routes: RouteObject[] = [
   {
-    element: <AuthProvider />,
+    element: (
+      <AppRouteRoot>
+        <AuthProvider />
+      </AppRouteRoot>
+    ),
     HydrateFallback: SessionLoadingScreen,
     children: [
       { index: true, element: <RootRedirect /> },
