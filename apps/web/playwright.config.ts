@@ -7,13 +7,19 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   reporter: 'list',
   use: {
-    baseURL: 'http://127.0.0.1:4173',
+    baseURL: 'https://127.0.0.1:4173',
+    ignoreHTTPSErrors: true,
     trace: 'on-first-retry',
   },
   projects: [
     {
       name: 'mobile-chrome',
-      use: { ...devices['Pixel 7'] },
+      use: {
+        ...devices['Pixel 7'],
+        launchOptions: {
+          args: ['--ignore-certificate-errors'],
+        },
+      },
     },
     {
       name: 'mobile-safari',
@@ -21,8 +27,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'pnpm preview',
-    url: 'http://127.0.0.1:4173',
+    command: 'pnpm preview:https',
+    ignoreHTTPSErrors: true,
+    url: 'https://127.0.0.1:4173',
     reuseExistingServer: !process.env.CI,
   },
 });

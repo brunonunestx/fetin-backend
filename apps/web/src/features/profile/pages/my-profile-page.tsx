@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/features/auth/use-auth';
 import { ProfileForm } from '@/features/profile/components/profile-form';
 import { ProfileSummary } from '@/features/profile/components/profile-summary';
+import { PwaInstallCard } from '@/features/pwa/components/pwa-install-card';
 
 function MyProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
@@ -51,7 +52,8 @@ function MyProfilePage() {
               }}
               profile={profile}
             />
-            <div className="px-5 pb-8">
+            <div className="space-y-3 px-5 pb-8">
+              <PwaInstallCard />
               <Button className="w-full" onClick={logout} type="button" variant="outline">
                 Sair da conta
               </Button>

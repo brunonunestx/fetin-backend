@@ -515,3 +515,82 @@ test('lets a contractor publish, review and cancel a job', async ({ page }) => {
   await page.getByRole('button', { name: 'Sim, cancelar vaga' }).click();
   await expect(page.getByText('Cancelado')).toBeVisible();
 });
+
+test('serves an offline app shell without caching API responses', async ({
+  context,
+  page,
+}, testInfo) => {
+  test.skip(
+    testInfo.project.name !== 'mobile-chrome',
+    'Service worker inspection is covered in the Chromium mobile project',
+  );
+
+  await page.goto('/boas-vindas');
+
+  const manifest = await page.evaluate(async () => {
+    const response = await fetch('/manifest.webmanifest');
+    return response.json() as Promise<Record<string, unknown>>;
+  });
+  expect(manifest).toMatchObject({
+    background_color: '#f8f6f0',
+    display: 'standalone',
+    id: '/',
+    name: 'TrampoFácil',
+    start_url: '/',
+    theme_color: '#0b6b61',
+  });
+  expect(manifest.icons).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ sizes: '192x192' }),
+      expect.objectContaining({ purpose: 'any', sizes: '512x512' }),
+      expect.objectContaining({ purpose: 'maskable', sizes: '512x512' }),
+    ]),
+  );
+
+  await expect.poll(() => context.serviceWorkers().length).toBeGreaterThan(0);
+  await page.evaluate(() => navigator.serviceWorker.ready);
+  await page.reload();
+  await expect
+    .poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller)))
+    .toBe(true);
+  await page.evaluate(async () => {
+    const cache = await caches.open('e2e-stale-api-response');
+    await cache.put(
+      '/api/jobs',
+      new Response(JSON.stringify([{ id: 'stale-job' }]), {
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+  });
+
+  try {
+    await context.setOffline(true);
+    expect(
+      await page.evaluate(async () => {
+        try {
+          await fetch('/api/jobs', { cache: 'no-store' });
+          return false;
+        } catch {
+          return true;
+        }
+      }),
+    ).toBe(true);
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await expect(page.getByRole('heading', { name: 'Você está sem internet' })).toBeVisible();
+    await page.getByRole('button', { name: 'Tentar novamente' }).click();
+    await expect(page.getByText('Ainda não encontramos uma conexão.')).toBeVisible();
+  } finally {
+    await context.setOffline(false);
+    await page.evaluate(() => caches.delete('e2e-stale-api-response'));
+  }
+});
+
+test('guides installation from the iPhone Share menu', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-safari', 'iPhone-only installation guidance');
+  await page.goto('/boas-vindas');
+
+  await page.getByRole('button', { name: 'Ver como instalar no iPhone' }).click();
+
+  await expect(page.getByRole('heading', { name: 'Instalar no iPhone' })).toBeVisible();
+  await expect(page.getByText('Compartilhar → Adicionar à Tela de Início')).toBeVisible();
+});

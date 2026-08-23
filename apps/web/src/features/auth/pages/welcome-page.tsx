@@ -5,6 +5,7 @@ import { MobileShell } from '@/components/shared/mobile-shell';
 import { RoleOption } from '@/components/shared/role-option';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { PwaInstallCard } from '@/features/pwa/components/pwa-install-card';
 
 function WelcomePage() {
   return (
@@ -49,6 +50,10 @@ function WelcomePage() {
             />
           </div>
         </section>
+
+        <div className="mt-6">
+          <PwaInstallCard />
+        </div>
 
         <div className="mt-auto flex flex-col items-center gap-1 pt-9 text-center">
           <span className="text-base text-muted-foreground">Já tem uma conta?</span>
