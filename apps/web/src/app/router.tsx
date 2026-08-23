@@ -26,8 +26,8 @@ async function loadRegisterPage() {
 }
 
 async function loadOwnerHomePage() {
-  const module = await import('@/features/auth/pages/authenticated-placeholders');
-  return { Component: module.OwnerHomePage };
+  const { OwnerJobsPage } = await import('@/features/jobs/pages/owner-jobs-page');
+  return { Component: OwnerJobsPage };
 }
 
 async function loadOnboardingPage() {
@@ -75,6 +75,16 @@ async function loadLocationDetailsPage() {
   return { Component: LocationDetailsPage };
 }
 
+async function loadPublishJobPage() {
+  const { PublishJobPage } = await import('@/features/jobs/pages/publish-job-page');
+  return { Component: PublishJobPage };
+}
+
+async function loadOwnerJobDetailsPage() {
+  const { OwnerJobDetailsPage } = await import('@/features/jobs/pages/owner-job-details-page');
+  return { Component: OwnerJobDetailsPage };
+}
+
 const routes: RouteObject[] = [
   {
     element: <AuthProvider />,
@@ -119,6 +129,8 @@ const routes: RouteObject[] = [
                     path: 'painel',
                     lazy: loadOwnerHomePage,
                   },
+                  { path: 'painel/vagas/nova', lazy: loadPublishJobPage },
+                  { path: 'painel/vagas/:jobId', lazy: loadOwnerJobDetailsPage },
                   { path: 'locais', lazy: loadLocationsListPage },
                   { path: 'locais/novo', lazy: loadNewLocationPage },
                   { path: 'locais/:locationId', lazy: loadLocationDetailsPage },

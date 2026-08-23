@@ -14,6 +14,7 @@ const knownMessages: Record<string, string> = {
   INVALID_CREDENTIALS: 'E-mail ou senha incorretos.',
   INVALID_TOKEN: 'Sua sessão venceu. Entre novamente.',
   JOB_CANCELLED: 'Este trabalho foi cancelado e não pode mais ser aceito.',
+  JOB_ALREADY_CANCELLED: 'Esta vaga já foi cancelada.',
   JOB_NOT_FOUND: 'Este trabalho não foi encontrado.',
   LOCAL_NOT_FOUND: 'Este local não foi encontrado.',
   LOCAL_NOT_OWNED: 'Este local não pertence à sua conta.',

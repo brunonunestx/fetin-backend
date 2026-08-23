@@ -110,15 +110,17 @@ describe('authentication flows', () => {
     mock.onPost('/auth/login').reply(200, { accessToken: 'owner-token' });
     mock.onGet('/auth/me').reply(200, { type: 'local_owner', userId: 'owner-1' });
     mock.onGet('/profile').reply(200, completeOwnerProfile);
+    mock.onGet('/jobs').reply(200, []);
     const { router } = renderApp('/entrar');
 
     await user.type(await screen.findByLabelText('E-mail'), 'contratante@example.com');
     await user.type(screen.getByLabelText('Senha'), 'senha-segura');
     await user.click(screen.getByRole('button', { name: 'Entrar' }));
 
-    expect(await screen.findByText('Área do contratante')).toBeVisible();
+    expect(await screen.findByText('Nenhuma vaga publicada')).toBeVisible();
     expect(router.state.location.pathname).toBe('/painel');
-    await user.click(screen.getByRole('button', { name: 'Sair da conta' }));
+    await user.click(screen.getByRole('link', { name: 'Perfil' }));
+    await user.click(await screen.findByRole('button', { name: 'Sair da conta' }));
 
     expect(await screen.findByRole('heading', { name: 'Trabalho perto de você.' })).toBeVisible();
     expect(sessionStore.getAccessToken()).toBeNull();
@@ -144,9 +146,10 @@ describe('authentication flows', () => {
     sessionStore.setAccessToken('owner-token');
     mock.onGet('/auth/me').reply(200, { type: 'local_owner', userId: 'owner-1' });
     mock.onGet('/profile').reply(200, completeOwnerProfile);
+    mock.onGet('/jobs').reply(200, []);
     const { router } = renderApp('/trabalhos');
 
-    expect(await screen.findByText('Área do contratante')).toBeVisible();
+    expect(await screen.findByText('Nenhuma vaga publicada')).toBeVisible();
     await waitFor(() => expect(router.state.location.pathname).toBe('/painel'));
   });
 });

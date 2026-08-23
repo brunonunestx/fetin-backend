@@ -1,5 +1,10 @@
 import { z } from 'zod';
-import type { Job, JobAcceptanceStatus } from '@/features/jobs/job-types';
+import type {
+  CreateJobInput,
+  Job,
+  JobAcceptanceStatus,
+  JobMutationResult,
+} from '@/features/jobs/job-types';
 import { httpClient } from '@/lib/api/http-client';
 import { parseApiResponse } from '@/lib/api/parse-response';
 
@@ -28,6 +33,8 @@ const jobSchema = z.object({
   title: z.string(),
   value: z.string().regex(/^\d+(?:\.\d{1,2})?$/),
 });
+
+const jobMutationResultSchema = jobSchema.omit({ filled: true, local: true });
 
 const acceptanceStatusSchema = z.discriminatedUnion('status', [
   z.object({ status: z.literal('pending') }),
@@ -62,4 +69,14 @@ async function getJobAcceptanceStatus(
   return parseApiResponse(acceptanceStatusSchema, response.data);
 }
 
-export { acceptJob, getJob, getJobAcceptanceStatus, listJobs };
+async function createJob(input: CreateJobInput): Promise<JobMutationResult> {
+  const response = await httpClient.post<unknown>('/jobs', input);
+  return parseApiResponse(jobMutationResultSchema, response.data);
+}
+
+async function cancelJob(jobId: string): Promise<JobMutationResult> {
+  const response = await httpClient.patch<unknown>(`/jobs/${jobId}/cancel`);
+  return parseApiResponse(jobMutationResultSchema, response.data);
+}
+
+export { acceptJob, cancelJob, createJob, getJob, getJobAcceptanceStatus, listJobs };

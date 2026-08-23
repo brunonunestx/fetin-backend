@@ -4,6 +4,7 @@ const jobsQueryKeys = {
   detail: (jobId: string) => [...jobsQueryKeys.details(), jobId] as const,
   details: () => [...jobsQueryKeys.all, 'detail'] as const,
   localList: (localId: string) => [...jobsQueryKeys.lists(), 'local', localId] as const,
+  ownerList: (ownerId: string) => [...jobsQueryKeys.lists(), 'owner', ownerId] as const,
   list: () => [...jobsQueryKeys.lists(), 'available'] as const,
   lists: () => [...jobsQueryKeys.all, 'list'] as const,
 };

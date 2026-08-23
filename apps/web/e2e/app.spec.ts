@@ -384,3 +384,134 @@ test('lets a contractor create a location and see its jobs', async ({ page }) =>
   await expect(page.getByRole('article', { name: job.title })).toBeVisible();
   await expect(page.getByText('Disponível')).toBeVisible();
 });
+
+test('lets a contractor publish, review and cancel a job', async ({ page }) => {
+  const ownerId = '11111111-1111-4111-8111-111111111111';
+  const jobId = '33333333-3333-4333-8333-333333333333';
+  const startsAtLocal = '2099-09-15T09:30';
+  const startsAt = new Date(startsAtLocal).toISOString();
+  const location = {
+    address: 'Rua das Flores, 120',
+    city: 'Pouso Alegre',
+    createdAt: '2026-08-22T12:00:00.000Z',
+    id: '22222222-2222-4222-8222-222222222222',
+    name: 'Padaria Central',
+    ownerId,
+    state: 'MG',
+    zipCode: '37550-000',
+  };
+  const createdJob = {
+    cancelledAt: null,
+    createdAt: '2026-08-22T12:00:00.000Z',
+    description: 'Carregar e organizar os sacos no depósito.',
+    durationMinutes: 150,
+    id: jobId,
+    localId: location.id,
+    startsAt,
+    title: 'Carregar sacos',
+    value: '250.50',
+  };
+  let postRequests = 0;
+
+  await page.addInitScript({
+    content: "globalThis.localStorage.setItem('trampofacil.access-token', 'owner-token');",
+  });
+  await page.route('**/api/auth/me', async (route) => {
+    await route.fulfill({
+      body: JSON.stringify({ type: 'local_owner', userId: ownerId }),
+      contentType: 'application/json',
+      status: 200,
+    });
+  });
+  await page.route('**/api/profile', async (route) => {
+    await route.fulfill({
+      body: JSON.stringify({
+        age: null,
+        bio: 'Tenho uma pequena padaria no centro.',
+        createdAt: '2026-08-22T12:00:00.000Z',
+        email: 'maria@example.com',
+        id: ownerId,
+        name: 'Maria Souza',
+        phone: '+5535988887777',
+        position: null,
+        type: 'local_owner',
+      }),
+      contentType: 'application/json',
+      status: 200,
+    });
+  });
+  await page.route('**/api/locals', async (route) => {
+    await route.fulfill({
+      body: JSON.stringify([location]),
+      contentType: 'application/json',
+      status: 200,
+    });
+  });
+  await page.route('**/api/jobs', async (route) => {
+    if (route.request().method() === 'POST') {
+      postRequests += 1;
+      expect(route.request().postDataJSON()).toEqual({
+        description: createdJob.description,
+        durationMinutes: createdJob.durationMinutes,
+        localId: location.id,
+        startsAt,
+        title: createdJob.title,
+        value: 250.5,
+      });
+      await route.fulfill({
+        body: JSON.stringify(createdJob),
+        contentType: 'application/json',
+        status: 201,
+      });
+      return;
+    }
+
+    await route.fulfill({ body: '[]', contentType: 'application/json', status: 200 });
+  });
+  await page.route(`**/api/jobs/${jobId}`, async (route) => {
+    await route.fulfill({
+      body: JSON.stringify({ ...createdJob, filled: false, local: location }),
+      contentType: 'application/json',
+      status: 200,
+    });
+  });
+  await page.route(`**/api/jobs/${jobId}/accepted`, async (route) => {
+    await route.fulfill({
+      body: JSON.stringify({ status: 'pending' }),
+      contentType: 'application/json',
+      status: 200,
+    });
+  });
+  await page.route(`**/api/jobs/${jobId}/cancel`, async (route) => {
+    expect(route.request().method()).toBe('PATCH');
+    await route.fulfill({
+      body: JSON.stringify({ ...createdJob, cancelledAt: '2026-08-23T12:00:00.000Z' }),
+      contentType: 'application/json',
+      status: 200,
+    });
+  });
+
+  await page.goto('/painel/vagas/nova');
+
+  await expect(page.getByRole('radio', { name: /Padaria Central/ })).toBeChecked();
+  await page.getByLabel('Título do trabalho').fill(createdJob.title);
+  await page.getByLabel('O que precisa ser feito?').fill(createdJob.description);
+  await page.getByRole('button', { name: 'Continuar' }).click();
+  await page.getByLabel('Data e horário').fill(startsAtLocal);
+  await page.getByLabel('Duração estimada em horas').fill('2.5');
+  await page.getByRole('button', { name: 'Continuar' }).click();
+  await page.getByLabel('Valor total').fill('250,50');
+  await page.getByRole('button', { name: 'Continuar' }).click();
+
+  await expect(page.getByRole('heading', { name: 'Revise antes de publicar.' })).toBeVisible();
+  await expect(page.getByText('2 horas e 30 minutos')).toBeVisible();
+  expect(postRequests).toBe(0);
+  await page.getByRole('button', { name: 'Publicar vaga' }).click();
+
+  await expect(page).toHaveURL(new RegExp(`/painel/vagas/${jobId}$`));
+  await expect(page.getByRole('heading', { name: createdJob.title })).toBeVisible();
+  await page.getByRole('button', { name: 'Cancelar vaga' }).click();
+  await expect(page.getByRole('heading', { name: 'Cancelar esta vaga?' })).toBeVisible();
+  await page.getByRole('button', { name: 'Sim, cancelar vaga' }).click();
+  await expect(page.getByText('Cancelado')).toBeVisible();
+});

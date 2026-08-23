@@ -22,8 +22,24 @@ type Job = {
   value: string;
 };
 
+type CreateJobInput = Pick<
+  Job,
+  'description' | 'durationMinutes' | 'localId' | 'startsAt' | 'title'
+> & {
+  value: number;
+};
+
+type JobMutationResult = Omit<Job, 'filled' | 'local'>;
+
 type JobAcceptanceStatus = { status: 'pending' } | { operatorId: string; status: 'finished' };
 
 type JobAvailability = 'available' | 'cancelled' | 'ended' | 'filled';
 
-export type { Job, JobAcceptanceStatus, JobAvailability, JobLocal };
+export type {
+  CreateJobInput,
+  Job,
+  JobAcceptanceStatus,
+  JobAvailability,
+  JobLocal,
+  JobMutationResult,
+};

@@ -1,11 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { MapPin } from 'lucide-react';
-import { useParams } from 'react-router';
+import { Link, useParams } from 'react-router';
 import { LoadingList } from '@/components/shared/loading-list';
 import { MobileShell } from '@/components/shared/mobile-shell';
 import { PageHeader } from '@/components/shared/page-header';
 import { ErrorState, StatePanel } from '@/components/shared/state-panel';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 import { formatAddress } from '@/features/jobs/job-formatters';
 import { listJobs } from '@/features/jobs/jobs-api';
 import { jobsQueryKeys } from '@/features/jobs/jobs-query-keys';
@@ -62,6 +63,11 @@ function LocationDetailsPage() {
               <p className="mt-2 text-base leading-relaxed text-muted-foreground">
                 {formatAddress(locationQuery.data)}
               </p>
+              <Button asChild className="mt-5 w-full">
+                <Link to={`/painel/vagas/nova?localId=${locationQuery.data.id}`}>
+                  Publicar vaga neste local
+                </Link>
+              </Button>
             </section>
 
             <section aria-labelledby="local-jobs-heading" className="border-t border-border pt-6">
