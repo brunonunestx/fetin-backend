@@ -2,7 +2,6 @@ import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
-import { parseCorsOrigins } from './common/config/cors';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { JsonLoggerService } from './common/logger/json-logger.service';
 
@@ -20,12 +19,7 @@ async function bootstrap() {
     }),
   );
   app.useGlobalFilters(new AllExceptionsFilter());
-
-  const corsOrigins = parseCorsOrigins(process.env.CORS_ORIGIN);
-
-  if (corsOrigins) {
-    app.enableCors({ origin: corsOrigins });
-  }
+  app.enableCors({ origin: true });
 
   await app.listen(process.env.PORT ?? 3000);
 }

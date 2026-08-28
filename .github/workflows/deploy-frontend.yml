@@ -1,0 +1,69 @@
+name: Deploy frontend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/web/**'
+      - 'apps/pnpm-lock.yaml'
+      - '.github/workflows/deploy-frontend.yml'
+  workflow_dispatch: {}
+
+# Valores vêm de `terraform output` em terraform/ (env production).
+# Se a infra for recriada (novo apply que substitua o bucket/distribuição), atualize aqui.
+env:
+  AWS_REGION: us-east-1
+  S3_BUCKET: trampofacil-production-frontend
+  CLOUDFRONT_DISTRIBUTION_ID: E20CXBM2KA4YXN
+
+concurrency:
+  group: deploy-frontend
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.12.0'
+
+      - name: Enable Corepack (pnpm)
+        run: corepack enable
+
+      - name: Instalar dependências
+        working-directory: apps
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        working-directory: apps
+        run: pnpm --filter @trampofacil/web build
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Sync com o S3
+        run: |
+          aws s3 sync apps/web/dist "s3://$S3_BUCKET" \
+            --delete \
+            --cache-control "public,max-age=31536000,immutable" \
+            --exclude "index.html"
+
+          aws s3 cp apps/web/dist/index.html "s3://$S3_BUCKET/index.html" \
+            --cache-control "public,max-age=0,must-revalidate"
+
+      - name: Invalidar cache do CloudFront
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" \
+            --paths "/*"

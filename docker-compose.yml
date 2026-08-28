@@ -27,7 +27,6 @@ services:
       context: ./services
       dockerfile: core-api/Dockerfile
     environment:
-      CORS_ORIGIN: ${CORS_ORIGIN:-}
       DATABASE_URL: postgresql://user:password@postgres:5432/core_api?schema=public
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-3600}
       JWT_SECRET: ${JWT_SECRET:-trampofacil-local-development-secret}
