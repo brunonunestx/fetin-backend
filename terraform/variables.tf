@@ -4,6 +4,12 @@ variable "aws_region" {
   default     = "us-east-1"
 }
 
+variable "aws_profile" {
+  description = "Profile do ~/.aws/credentials usado para autenticar (null usa a credential chain padrão, ex: env vars no CI)"
+  type        = string
+  default     = "bruno-account"
+}
+
 variable "project_name" {
   description = "Nome do projeto, usado como prefixo para os recursos"
   type        = string
