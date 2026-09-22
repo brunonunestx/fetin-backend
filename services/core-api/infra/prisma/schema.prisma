@@ -19,6 +19,28 @@ model JobSubscription {
   @@map("job_subscriptions")
 }
 
+enum JobCandidateStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+
+  @@map("job_candidate_status")
+}
+
+model JobCandidate {
+  id         String              @id @default(uuid()) @db.Uuid
+  jobId      String              @db.Uuid
+  operatorId String              @db.Uuid
+  status     JobCandidateStatus  @default(PENDING)
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+
+  @@unique([jobId, operatorId])
+  @@index([jobId])
+  @@index([operatorId])
+  @@map("job_candidates")
+}
+
 model Job {
   id              String    @id @default(uuid()) @db.Uuid
   localId         String    @db.Uuid

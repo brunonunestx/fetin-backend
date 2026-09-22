@@ -48,6 +48,15 @@ providers/    # infra compartilhada (Prisma, Redis, BullMQ), registrada em provi
 
 Como criar um module novo (estrutura de arquivos, quando usar publisher/processor, convenções de DTO) é coberto pela skill `backend` — usar essa skill em vez de decidir a estrutura na mão.
 
-### Fluxo de referência: corrida no aceite de vaga (`job-subscription/`)
+### Fluxo de referência: candidatura + confirmação pelo local (`job-subscription/`)
 
-`POST /jobs/:id/accept` (autenticado, role `operator`, `operatorId` vem do JWT) só enfileira o pedido no BullMQ e responde de forma otimista — não decide o vencedor na hora. O `job-subscription.processor.ts` consome a fila (concorrência 1, ordem FIFO) e resolve a corrida com lock distribuído no Redis (`SET lock:jobId operatorId NX PX`, chave `jobOperator:jobId` guarda o vencedor definitivo) mais unique constraint no Postgres como segunda camada. O resultado é consultável depois via `GET /jobs/:id/accepted`. Esse é o padrão a seguir pra qualquer fluxo novo que precise resolver concorrência (fila + lock + consulta assíncrona de status).
+O aceite de vaga não é mais "primeiro que chega, ganha": o vínculo final depende de confirmação explícita do `local_owner`.
+
+- `POST /jobs/:id/accept` (autenticado, role `operator`, `operatorId` vem do JWT) cria uma candidatura (`JobCandidate`, status `PENDING`) de forma **síncrona** — não há mais fila/corrida nesse passo, só idempotência (candidatar-se de novo é no-op via `P2002`). Bloqueado se a vaga estiver cancelada ou já preenchida (`JobSubscription` confirmada).
+- `GET /jobs/:id/candidates` (role `local_owner`, valida ownership do `Local`) lista as candidaturas da vaga.
+- `POST /jobs/:id/candidates/:operatorId/confirm` (role `local_owner`, valida ownership) é quem enfileira no BullMQ e responde de forma otimista — a decisão de qual operador fica com a vaga é resolvida assincronamente. O `job-subscription.processor.ts` consome a fila (concorrência 1, ordem FIFO) e resolve com lock distribuído no Redis (`SET lock:jobId operatorId NX PX`, chave `jobOperator:jobId` guarda o vencedor definitivo) mais unique constraint no Postgres como segunda camada; dentro da mesma transaction, marca o `JobCandidate` confirmado como `CONFIRMED` e os demais `PENDING` da vaga como `REJECTED`.
+- O resultado final é consultável via `GET /jobs/:id/accepted` (contrato inalterado: `pending`/`finished` + `operatorId`).
+
+Esse é o padrão a seguir pra qualquer fluxo novo que precise resolver concorrência (fila + lock + consulta assíncrona de status) — mas note que a fila/lock hoje protege o passo de **confirmação** (ação de um único ator, o `local_owner`), não mais o passo de candidatura (que pode ter N candidatos sem disputa).
+
+> `apps/web` (UX de operador "enviando aceite → confirming → won/lost" e tela do `local_owner`) ainda não foi atualizado pra esse fluxo — fica pendente como trabalho futuro.

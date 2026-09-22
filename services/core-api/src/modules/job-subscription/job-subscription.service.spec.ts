@@ -1,6 +1,11 @@
-import { ConflictException } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   Job,
+  JobCandidate,
   JobSubscription,
   Local,
   Prisma,
@@ -9,6 +14,7 @@ import { PrismaProvider } from '../../providers/prisma/prisma.provider';
 import { RedisProvider } from '../../providers/redis/redis.provider';
 import { JobService } from '../job/job.service';
 import { JobSubscriptionStatus } from './dto/job-subscription-status.dto';
+import { JobCandidateStatus } from './dto/job-candidate.dto';
 import { JobSubscriptionPublisher } from './job-subscription.publisher';
 import { JobSubscriptionService } from './job-subscription.service';
 
@@ -40,6 +46,18 @@ function createSubscription(
   };
 }
 
+function createCandidate(overrides: Partial<JobCandidate> = {}): JobCandidate {
+  return {
+    id: 'candidate-1',
+    jobId: 'job-1',
+    operatorId: 'operator-1',
+    status: 'PENDING',
+    createdAt: new Date('2024-01-01T12:00:00.000Z'),
+    updatedAt: new Date('2024-01-01T12:00:00.000Z'),
+    ...overrides,
+  };
+}
+
 function createLocal(overrides: Partial<Local> = {}): Local {
   return {
     id: 'local-1',
@@ -49,6 +67,8 @@ function createLocal(overrides: Partial<Local> = {}): Local {
     city: 'São Paulo',
     state: 'SP',
     zipCode: '01310-100',
+    latitude: null,
+    longitude: null,
     createdAt: new Date('2024-01-01T00:00:00.000Z'),
     ...overrides,
   };
@@ -59,7 +79,12 @@ function createDeps(): {
   redis: { get: jest.Mock };
   prisma: {
     jobSubscription: { findUnique: jest.Mock; findMany: jest.Mock };
-    local: { findMany: jest.Mock };
+    jobCandidate: {
+      create: jest.Mock;
+      findUnique: jest.Mock;
+      findMany: jest.Mock;
+    };
+    local: { findUnique: jest.Mock; findMany: jest.Mock };
   };
   jobService: { findById: jest.Mock; findManyByIds: jest.Mock };
 } {
@@ -71,7 +96,13 @@ function createDeps(): {
         findUnique: jest.fn(),
         findMany: jest.fn(),
       },
+      jobCandidate: {
+        create: jest.fn(),
+        findUnique: jest.fn(),
+        findMany: jest.fn(),
+      },
       local: {
+        findUnique: jest.fn(),
         findMany: jest.fn(),
       },
     },
@@ -92,19 +123,22 @@ function createService(deps: ReturnType<typeof createDeps>) {
 }
 
 describe('JobSubscriptionService', () => {
-  describe('schedule', () => {
-    it('publishes the accept request when the job is not cancelled', async () => {
+  describe('applyCandidate', () => {
+    it('creates the candidacy when the job accepts candidates', async () => {
       const deps = createDeps();
       deps.jobService.findById.mockResolvedValue(createJob());
+      deps.prisma.jobSubscription.findUnique.mockResolvedValue(null);
       const service = createService(deps);
       const data = { jobId: 'job-1', operatorId: 'operator-1' };
 
-      await service.schedule(data);
+      await service.applyCandidate(data);
 
-      expect(deps.publisher.publish).toHaveBeenCalledWith(data);
+      expect(deps.prisma.jobCandidate.create).toHaveBeenCalledWith({
+        data,
+      });
     });
 
-    it('throws 409 and does not publish when the job was cancelled', async () => {
+    it('throws 409 and does not create a candidacy when the job was cancelled', async () => {
       const deps = createDeps();
       deps.jobService.findById.mockResolvedValue(
         createJob({ cancelledAt: new Date() }),
@@ -112,8 +146,139 @@ describe('JobSubscriptionService', () => {
       const service = createService(deps);
       const data = { jobId: 'job-1', operatorId: 'operator-1' };
 
-      await expect(service.schedule(data)).rejects.toThrow(ConflictException);
+      await expect(service.applyCandidate(data)).rejects.toThrow(
+        ConflictException,
+      );
+      expect(deps.prisma.jobCandidate.create).not.toHaveBeenCalled();
+    });
+
+    it('throws 409 and does not create a candidacy when the job is already filled', async () => {
+      const deps = createDeps();
+      deps.jobService.findById.mockResolvedValue(createJob());
+      deps.prisma.jobSubscription.findUnique.mockResolvedValue({
+        deletedAt: null,
+      });
+      const service = createService(deps);
+      const data = { jobId: 'job-1', operatorId: 'operator-1' };
+
+      await expect(service.applyCandidate(data)).rejects.toThrow(
+        ConflictException,
+      );
+      expect(deps.prisma.jobCandidate.create).not.toHaveBeenCalled();
+    });
+
+    it('is idempotent when the operator already applied', async () => {
+      const deps = createDeps();
+      deps.jobService.findById.mockResolvedValue(createJob());
+      deps.prisma.jobSubscription.findUnique.mockResolvedValue(null);
+      deps.prisma.jobCandidate.create.mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError('duplicate', {
+          code: 'P2002',
+          clientVersion: 'test',
+        }),
+      );
+      const service = createService(deps);
+      const data = { jobId: 'job-1', operatorId: 'operator-1' };
+
+      await expect(service.applyCandidate(data)).resolves.toBeUndefined();
+    });
+  });
+
+  describe('listCandidates', () => {
+    it('throws 403 when the local does not belong to the owner', async () => {
+      const deps = createDeps();
+      deps.jobService.findById.mockResolvedValue(createJob());
+      deps.prisma.local.findUnique.mockResolvedValue(
+        createLocal({ ownerId: 'someone-else' }),
+      );
+      const service = createService(deps);
+
+      await expect(service.listCandidates('job-1', 'owner-1')).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+
+    it('returns the candidates mapped to the API status', async () => {
+      const deps = createDeps();
+      deps.jobService.findById.mockResolvedValue(createJob());
+      deps.prisma.local.findUnique.mockResolvedValue(createLocal());
+      deps.prisma.jobCandidate.findMany.mockResolvedValue([
+        createCandidate({ status: 'REJECTED', operatorId: 'operator-2' }),
+      ]);
+      const service = createService(deps);
+
+      const result = await service.listCandidates('job-1', 'owner-1');
+
+      expect(result).toEqual([
+        {
+          operatorId: 'operator-2',
+          status: JobCandidateStatus.REJECTED,
+          createdAt: expect.any(Date) as Date,
+        },
+      ]);
+    });
+  });
+
+  describe('confirmCandidate', () => {
+    it('throws 403 when the local does not belong to the owner', async () => {
+      const deps = createDeps();
+      deps.jobService.findById.mockResolvedValue(createJob());
+      deps.prisma.local.findUnique.mockResolvedValue(
+        createLocal({ ownerId: 'someone-else' }),
+      );
+      const service = createService(deps);
+
+      await expect(
+        service.confirmCandidate('job-1', 'operator-1', 'owner-1'),
+      ).rejects.toThrow(ForbiddenException);
       expect(deps.publisher.publish).not.toHaveBeenCalled();
+    });
+
+    it('throws 409 when the job is already filled', async () => {
+      const deps = createDeps();
+      deps.jobService.findById.mockResolvedValue(createJob());
+      deps.prisma.local.findUnique.mockResolvedValue(createLocal());
+      deps.prisma.jobSubscription.findUnique.mockResolvedValue({
+        deletedAt: null,
+      });
+      const service = createService(deps);
+
+      await expect(
+        service.confirmCandidate('job-1', 'operator-1', 'owner-1'),
+      ).rejects.toThrow(ConflictException);
+      expect(deps.publisher.publish).not.toHaveBeenCalled();
+    });
+
+    it('throws 404 when the candidacy does not exist or was already decided', async () => {
+      const deps = createDeps();
+      deps.jobService.findById.mockResolvedValue(createJob());
+      deps.prisma.local.findUnique.mockResolvedValue(createLocal());
+      deps.prisma.jobSubscription.findUnique.mockResolvedValue(null);
+      deps.prisma.jobCandidate.findUnique.mockResolvedValue(
+        createCandidate({ status: 'REJECTED' }),
+      );
+      const service = createService(deps);
+
+      await expect(
+        service.confirmCandidate('job-1', 'operator-1', 'owner-1'),
+      ).rejects.toThrow(NotFoundException);
+      expect(deps.publisher.publish).not.toHaveBeenCalled();
+    });
+
+    it('publishes the confirmation when the candidacy is pending', async () => {
+      const deps = createDeps();
+      deps.jobService.findById.mockResolvedValue(createJob());
+      deps.prisma.local.findUnique.mockResolvedValue(createLocal());
+      deps.prisma.jobSubscription.findUnique.mockResolvedValue(null);
+      deps.prisma.jobCandidate.findUnique.mockResolvedValue(createCandidate());
+      const service = createService(deps);
+
+      await service.confirmCandidate('job-1', 'operator-1', 'owner-1');
+
+      expect(deps.publisher.publish).toHaveBeenCalledWith({
+        jobId: 'job-1',
+        operatorId: 'operator-1',
+      });
     });
   });
 
@@ -206,6 +371,8 @@ describe('JobSubscriptionService', () => {
             city: local.city,
             state: local.state,
             zipCode: local.zipCode,
+            latitude: local.latitude,
+            longitude: local.longitude,
           },
           cancelledAt: null,
           acceptedAt: subscription.createdAt,

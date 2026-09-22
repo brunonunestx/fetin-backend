@@ -35,7 +35,7 @@ export class JobSubscriptionProcessor extends WorkerHost {
 
     if (!acquiredLock) {
       this.logger.log(
-        `Operator ${operatorId} lost the race for job ${jobId}: lock not acquired`,
+        `Duplicate confirmation for job ${jobId} ignored: lock not acquired`,
       );
       return;
     }
@@ -45,7 +45,7 @@ export class JobSubscriptionProcessor extends WorkerHost {
 
     if (existingOperatorId) {
       this.logger.log(
-        `Operator ${operatorId} lost the race for job ${jobId}: jobOperator already set to ${existingOperatorId}`,
+        `Duplicate confirmation for job ${jobId} ignored: already confirmed for ${existingOperatorId}`,
       );
       return;
     }
@@ -53,11 +53,23 @@ export class JobSubscriptionProcessor extends WorkerHost {
     await this.redis.set(jobOperatorKey, operatorId, JOB_OPERATOR_TTL_MS);
 
     try {
-      await this.prisma.jobSubscription.create({
-        data: { jobId, operatorId },
-      });
+      await this.prisma.$transaction([
+        this.prisma.jobSubscription.create({
+          data: { jobId, operatorId },
+        }),
+        this.prisma.jobCandidate.update({
+          where: { jobId_operatorId: { jobId, operatorId } },
+          data: { status: 'CONFIRMED' },
+        }),
+        this.prisma.jobCandidate.updateMany({
+          where: { jobId, operatorId: { not: operatorId }, status: 'PENDING' },
+          data: { status: 'REJECTED' },
+        }),
+      ]);
 
-      this.logger.log(`Operator ${operatorId} won the race for job ${jobId}`);
+      this.logger.log(
+        `Local confirmed operator ${operatorId} for job ${jobId}`,
+      );
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
