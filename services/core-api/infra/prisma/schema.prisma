@@ -64,6 +64,8 @@ model Local {
   city      String
   state     String
   zipCode   String
+  latitude  Float?
+  longitude Float?
   createdAt DateTime @default(now())
 
   @@index([ownerId])

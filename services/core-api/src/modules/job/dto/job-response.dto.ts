@@ -12,4 +12,5 @@ export class JobResponseDto {
   cancelledAt!: Date | null;
   filled!: boolean;
   local!: LocalSummaryDto;
+  distanceKm?: number;
 }

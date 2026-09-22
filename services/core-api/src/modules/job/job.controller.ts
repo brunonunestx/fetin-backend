@@ -36,7 +36,7 @@ export class JobController {
 
   @Get()
   async findAll(@Query() query: FindJobsDto): Promise<JobResponseDto[]> {
-    return this.jobService.findAll(query.localId);
+    return this.jobService.findAll(query);
   }
 
   @Get(':id')

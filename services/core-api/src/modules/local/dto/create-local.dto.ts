@@ -1,4 +1,12 @@
-import { IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import {
+  IsLatitude,
+  IsLongitude,
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 const UF_REGEX = /^[A-Z]{2}$/;
 const ZIP_CODE_REGEX = /^\d{5}-?\d{3}$/;
@@ -30,4 +38,12 @@ export class CreateLocalDto {
     message: 'zipCode deve estar no formato de CEP (ex: 01310-100)',
   })
   zipCode: string;
+
+  @IsOptional()
+  @IsLatitude()
+  latitude?: number;
+
+  @IsOptional()
+  @IsLongitude()
+  longitude?: number;
 }

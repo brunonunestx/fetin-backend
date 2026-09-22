@@ -13,6 +13,8 @@ function createLocal(overrides: Partial<Local> = {}): Local {
     city: 'São Paulo',
     state: 'SP',
     zipCode: '01310-100',
+    latitude: null,
+    longitude: null,
     createdAt: new Date('2024-01-01T00:00:00.000Z'),
     ...overrides,
   };

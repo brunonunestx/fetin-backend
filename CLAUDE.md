@@ -60,3 +60,14 @@ O aceite de vaga não é mais "primeiro que chega, ganha": o vínculo final depe
 Esse é o padrão a seguir pra qualquer fluxo novo que precise resolver concorrência (fila + lock + consulta assíncrona de status) — mas note que a fila/lock hoje protege o passo de **confirmação** (ação de um único ator, o `local_owner`), não mais o passo de candidatura (que pode ter N candidatos sem disputa).
 
 > `apps/web` (UX de operador "enviando aceite → confirming → won/lost" e tela do `local_owner`) ainda não foi atualizado pra esse fluxo — fica pendente como trabalho futuro.
+
+### Geolocalização (`local/`, `job/`)
+
+Sem PostGIS — decisão deliberada pela simplicidade, não precisa escalar. `Local` tem `latitude`/`longitude` (`Float?`, nullable — locals antigos ou cadastrados sem coordenada ficam sem elas, sem geocoding automático por endereço/CEP).
+
+`GET /jobs` aceita `lat`/`lng` opcionais (exigidos juntos) e `radiusKm` opcional:
+- Sem `lat`/`lng`: comportamento inalterado (ordenado por `createdAt desc`).
+- Com `lat`/`lng`: resultado ordenado por distância (mais perto primeiro), calculada com Haversine **em memória** (`JobService`, sem índice espacial, sem `$queryRaw`) a partir do `Local` de cada vaga já carregado. Vagas cujo `Local` não tem coordenada são excluídas do resultado. Com `radiusKm` também informado, filtra fora do raio.
+- Resposta ganha `distanceKm?: number`, presente só quando a busca teve `lat`/`lng`.
+
+Se algum dia precisar escalar (índice espacial, filtro geoespacial no banco), aí sim migrar `Local.latitude/longitude` pra `geography(Point,4326)` com extensão `postgis` — ver trade-off discutido antes desta implementação (Prisma não tem tipo nativo, exigiria `Unsupported(...)` + `$queryRaw` pras funções `ST_*`).

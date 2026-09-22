@@ -6,6 +6,8 @@ interface LocalSummarySource {
   city: string;
   state: string;
   zipCode: string;
+  latitude: number | null;
+  longitude: number | null;
 }
 
 export class LocalSummaryDto {
@@ -16,6 +18,8 @@ export class LocalSummaryDto {
   city!: string;
   state!: string;
   zipCode!: string;
+  latitude!: number | null;
+  longitude!: number | null;
 }
 
 export function toLocalSummary(local: LocalSummarySource): LocalSummaryDto {
@@ -27,5 +31,7 @@ export function toLocalSummary(local: LocalSummarySource): LocalSummaryDto {
     city: local.city,
     state: local.state,
     zipCode: local.zipCode,
+    latitude: local.latitude,
+    longitude: local.longitude,
   };
 }

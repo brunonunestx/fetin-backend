@@ -8,7 +8,15 @@ import { Job, Local } from '../../generated/prisma/client';
 import { PrismaProvider } from '../../providers/prisma/prisma.provider';
 import { toLocalSummary } from '../local/dto/local-summary.dto';
 import { CreateJobDto } from './dto/create-job.dto';
+import { FindJobsDto } from './dto/find-jobs.dto';
 import { JobResponseDto } from './dto/job-response.dto';
+
+const EARTH_RADIUS_KM = 6371;
+
+interface Coordinates {
+  lat: number;
+  lng: number;
+}
 
 @Injectable()
 export class JobService {
@@ -45,7 +53,9 @@ export class JobService {
     });
   }
 
-  async findAll(localId?: string): Promise<JobResponseDto[]> {
+  async findAll(filters: FindJobsDto = {}): Promise<JobResponseDto[]> {
+    const { localId, lat, lng, radiusKm } = filters;
+
     const jobs = await this.prisma.job.findMany({
       where: localId ? { localId } : undefined,
       orderBy: { createdAt: 'desc' },
@@ -68,14 +78,31 @@ export class JobService {
       subscriptions.map((subscription) => subscription.jobId),
     );
     const localsById = new Map(locals.map((local) => [local.id, local]));
+    const origin: Coordinates | null =
+      lat !== undefined && lng !== undefined ? { lat, lng } : null;
 
-    return jobs.map((job) =>
-      this.toJobResponse(
+    const responses = jobs.map((job) => {
+      const local = this.getLocalOrThrow(job.localId, localsById);
+
+      return this.toJobResponse(
         job,
-        this.getLocalOrThrow(job.localId, localsById),
+        local,
         filledJobIds.has(job.id),
-      ),
-    );
+        origin ? this.distanceToLocal(origin, local) : undefined,
+      );
+    });
+
+    if (!origin) {
+      return responses;
+    }
+
+    return responses
+      .filter(
+        (response) =>
+          response.distanceKm !== undefined &&
+          (radiusKm === undefined || response.distanceKm <= radiusKm),
+      )
+      .sort((a, b) => a.distanceKm! - b.distanceKm!);
   }
 
   async findManyByIds(ids: string[]): Promise<Job[]> {
@@ -170,6 +197,7 @@ export class JobService {
     job: Job,
     local: Local,
     filled: boolean,
+    distanceKm?: number,
   ): JobResponseDto {
     return {
       id: job.id,
@@ -183,6 +211,36 @@ export class JobService {
       cancelledAt: job.cancelledAt,
       filled,
       local: toLocalSummary(local),
+      distanceKm,
     };
+  }
+
+  private distanceToLocal(
+    origin: Coordinates,
+    local: Local,
+  ): number | undefined {
+    if (local.latitude === null || local.longitude === null) {
+      return undefined;
+    }
+
+    return this.haversineDistanceKm(origin, {
+      lat: local.latitude,
+      lng: local.longitude,
+    });
+  }
+
+  private haversineDistanceKm(from: Coordinates, to: Coordinates): number {
+    const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
+    const dLat = toRadians(to.lat - from.lat);
+    const dLng = toRadians(to.lng - from.lng);
+
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(toRadians(from.lat)) *
+        Math.cos(toRadians(to.lat)) *
+        Math.sin(dLng / 2) ** 2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return EARTH_RADIUS_KM * c;
   }
 }

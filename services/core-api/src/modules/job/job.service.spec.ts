@@ -17,6 +17,8 @@ function createLocal(overrides: Partial<Local> = {}): Local {
     city: 'São Paulo',
     state: 'SP',
     zipCode: '01310-100',
+    latitude: null,
+    longitude: null,
     createdAt: new Date('2024-01-01T00:00:00.000Z'),
     ...overrides,
   };
@@ -65,7 +67,12 @@ function createPrismaMock(): {
   };
 }
 
-function expectedJobResponse(job: Job, local: Local, filled: boolean) {
+function expectedJobResponse(
+  job: Job,
+  local: Local,
+  filled: boolean,
+  distanceKm?: number,
+) {
   return {
     id: job.id,
     localId: job.localId,
@@ -85,7 +92,10 @@ function expectedJobResponse(job: Job, local: Local, filled: boolean) {
       city: local.city,
       state: local.state,
       zipCode: local.zipCode,
+      latitude: local.latitude,
+      longitude: local.longitude,
     },
+    distanceKm,
   };
 }
 
@@ -205,7 +215,7 @@ describe('JobService', () => {
       prisma.local.findMany.mockResolvedValue([createLocal()]);
       const service = new JobService(prisma as unknown as PrismaProvider);
 
-      await service.findAll('local-1');
+      await service.findAll({ localId: 'local-1' });
 
       expect(prisma.job.findMany).toHaveBeenCalledWith({
         where: { localId: 'local-1' },
@@ -221,6 +231,82 @@ describe('JobService', () => {
       const service = new JobService(prisma as unknown as PrismaProvider);
 
       await expect(service.findAll()).rejects.toThrow(NotFoundException);
+    });
+
+    describe('geolocation', () => {
+      const origin = { lat: -23.5505, lng: -46.6333 }; // São Paulo
+      const nearLocal = createLocal({
+        id: 'local-near',
+        latitude: -23.5605,
+        longitude: -46.6433,
+      }); // ~1.5km
+      const farLocal = createLocal({
+        id: 'local-far',
+        latitude: -22.9068,
+        longitude: -43.1729,
+      }); // Rio de Janeiro, ~360km
+      const localWithoutCoordinates = createLocal({
+        id: 'local-no-coords',
+      });
+      const nearJob = createJob({ id: 'job-near', localId: 'local-near' });
+      const farJob = createJob({ id: 'job-far', localId: 'local-far' });
+      const jobWithoutCoordinates = createJob({
+        id: 'job-no-coords',
+        localId: 'local-no-coords',
+      });
+
+      it('sorts jobs by distance to the given coordinates', async () => {
+        const prisma = createPrismaMock();
+        prisma.job.findMany.mockResolvedValue([farJob, nearJob]);
+        prisma.jobSubscription.findMany.mockResolvedValue([]);
+        prisma.local.findMany.mockResolvedValue([farLocal, nearLocal]);
+        const service = new JobService(prisma as unknown as PrismaProvider);
+
+        const result = await service.findAll({ ...origin });
+
+        expect(result.map((job) => job.id)).toEqual(['job-near', 'job-far']);
+        expect(result[0].distanceKm).toBeLessThan(result[1].distanceKm!);
+      });
+
+      it('filters out jobs beyond radiusKm', async () => {
+        const prisma = createPrismaMock();
+        prisma.job.findMany.mockResolvedValue([nearJob, farJob]);
+        prisma.jobSubscription.findMany.mockResolvedValue([]);
+        prisma.local.findMany.mockResolvedValue([nearLocal, farLocal]);
+        const service = new JobService(prisma as unknown as PrismaProvider);
+
+        const result = await service.findAll({ ...origin, radiusKm: 10 });
+
+        expect(result.map((job) => job.id)).toEqual(['job-near']);
+      });
+
+      it('excludes jobs whose local has no coordinates when searching by distance', async () => {
+        const prisma = createPrismaMock();
+        prisma.job.findMany.mockResolvedValue([nearJob, jobWithoutCoordinates]);
+        prisma.jobSubscription.findMany.mockResolvedValue([]);
+        prisma.local.findMany.mockResolvedValue([
+          nearLocal,
+          localWithoutCoordinates,
+        ]);
+        const service = new JobService(prisma as unknown as PrismaProvider);
+
+        const result = await service.findAll({ ...origin });
+
+        expect(result.map((job) => job.id)).toEqual(['job-near']);
+      });
+
+      it('does not filter or sort when coordinates are not provided', async () => {
+        const prisma = createPrismaMock();
+        prisma.job.findMany.mockResolvedValue([farJob, nearJob]);
+        prisma.jobSubscription.findMany.mockResolvedValue([]);
+        prisma.local.findMany.mockResolvedValue([farLocal, nearLocal]);
+        const service = new JobService(prisma as unknown as PrismaProvider);
+
+        const result = await service.findAll();
+
+        expect(result.map((job) => job.id)).toEqual(['job-far', 'job-near']);
+        expect(result[0].distanceKm).toBeUndefined();
+      });
     });
   });
 
