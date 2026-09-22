@@ -3,7 +3,9 @@ import type {
   CreateJobInput,
   Job,
   JobAcceptanceStatus,
+  JobCandidate,
   JobMutationResult,
+  JobSearchCoordinates,
 } from '@/features/jobs/job-types';
 import { httpClient } from '@/lib/api/http-client';
 import { parseApiResponse } from '@/lib/api/parse-response';
@@ -14,6 +16,8 @@ const jobLocalSchema = z.object({
   address: z.string(),
   city: z.string(),
   id: z.string().min(1),
+  latitude: z.number().min(-90).max(90).nullable(),
+  longitude: z.number().min(-180).max(180).nullable(),
   name: z.string(),
   ownerId: z.string().min(1),
   state: z.string(),
@@ -24,6 +28,7 @@ const jobSchema = z.object({
   cancelledAt: dateStringSchema.nullable(),
   createdAt: dateStringSchema,
   description: z.string(),
+  distanceKm: z.number().nonnegative().optional(),
   durationMinutes: z.number().int().positive(),
   filled: z.boolean(),
   id: z.string().min(1),
@@ -41,12 +46,31 @@ const acceptanceStatusSchema = z.discriminatedUnion('status', [
   z.object({ operatorId: z.string().min(1), status: z.literal('finished') }),
 ]);
 
+const jobCandidateSchema = z.object({
+  createdAt: dateStringSchema,
+  operatorId: z.string().min(1),
+  status: z.enum(['confirmed', 'pending', 'rejected']),
+});
+
 async function listJobs({
+  coordinates,
   localId,
   signal,
-}: { localId?: string; signal?: AbortSignal } = {}): Promise<Job[]> {
+}: {
+  coordinates?: JobSearchCoordinates;
+  localId?: string;
+  signal?: AbortSignal;
+} = {}): Promise<Job[]> {
   const response = await httpClient.get<unknown>('/jobs', {
-    params: localId ? { localId } : undefined,
+    params:
+      localId || coordinates
+        ? {
+            ...(coordinates
+              ? { lat: coordinates.latitude, lng: coordinates.longitude }
+              : undefined),
+            ...(localId ? { localId } : undefined),
+          }
+        : undefined,
     signal,
   });
   return parseApiResponse(z.array(jobSchema), response.data);
@@ -59,6 +83,23 @@ async function getJob(jobId: string, signal?: AbortSignal): Promise<Job> {
 
 async function acceptJob(jobId: string): Promise<void> {
   await httpClient.post(`/jobs/${jobId}/accept`);
+}
+
+async function getOwnJobCandidate(
+  jobId: string,
+  signal?: AbortSignal,
+): Promise<JobCandidate | null> {
+  const response = await httpClient.get<unknown>(`/jobs/${jobId}/candidates/me`, { signal });
+  return parseApiResponse(jobCandidateSchema.nullable(), response.data);
+}
+
+async function listJobCandidates(jobId: string, signal?: AbortSignal): Promise<JobCandidate[]> {
+  const response = await httpClient.get<unknown>(`/jobs/${jobId}/candidates`, { signal });
+  return parseApiResponse(z.array(jobCandidateSchema), response.data);
+}
+
+async function confirmJobCandidate(jobId: string, operatorId: string): Promise<void> {
+  await httpClient.post(`/jobs/${jobId}/candidates/${operatorId}/confirm`);
 }
 
 async function getJobAcceptanceStatus(
@@ -79,4 +120,14 @@ async function cancelJob(jobId: string): Promise<JobMutationResult> {
   return parseApiResponse(jobMutationResultSchema, response.data);
 }
 
-export { acceptJob, cancelJob, createJob, getJob, getJobAcceptanceStatus, listJobs };
+export {
+  acceptJob,
+  cancelJob,
+  confirmJobCandidate,
+  createJob,
+  getJob,
+  getJobAcceptanceStatus,
+  getOwnJobCandidate,
+  listJobCandidates,
+  listJobs,
+};

@@ -168,21 +168,21 @@ function JobDetailsPage() {
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button className="w-full" disabled={!acceptance.isOnline} size="lg">
-                      {acceptance.isOnline ? 'Quero este trabalho' : 'Sem conexão'}
+                      {acceptance.isOnline ? 'Quero me candidatar' : 'Sem conexão'}
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Quer aceitar este trabalho?</AlertDialogTitle>
+                      <AlertDialogTitle>Quer se candidatar a este trabalho?</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Ao confirmar, seu pedido entrará na fila. Outra pessoa pode estar tentando
-                        ao mesmo tempo.
+                        Ao confirmar, o contratante poderá analisar seu perfil antes de escolher
+                        quem fará o trabalho.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Voltar</AlertDialogCancel>
                       <AlertDialogAction onClick={acceptance.submitAcceptance}>
-                        Sim, quero este trabalho
+                        Sim, enviar candidatura
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>

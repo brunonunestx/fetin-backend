@@ -13,6 +13,8 @@ const baseJob: Job = {
     address: 'Rua das Flores, 120',
     city: 'Pouso Alegre',
     id: 'local-1',
+    latitude: null,
+    longitude: null,
     name: 'Padaria Central',
     ownerId: 'owner-1',
     state: 'MG',

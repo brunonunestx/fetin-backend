@@ -1,93 +1,39 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
-import { acceptedJobsQueryKeys } from '@/features/accepted-jobs/accepted-jobs-query-keys';
-import { acceptJob, getJobAcceptanceStatus } from '@/features/jobs/jobs-api';
+import { acceptJob, getOwnJobCandidate } from '@/features/jobs/jobs-api';
 import { jobsQueryKeys } from '@/features/jobs/jobs-query-keys';
-import type { Job } from '@/features/jobs/job-types';
+import type { JobCandidate } from '@/features/jobs/job-types';
 import { useOnlineStatus } from '@/lib/use-online-status';
 
-const POLL_INTERVAL_MS = 1_500;
-const POLL_TIMEOUT_MS = 15_000;
+const CANDIDATE_STATUS_POLL_INTERVAL_MS = 5_000;
 
 type AcceptanceViewState =
-  'confirming' | 'delayed' | 'error' | 'idle' | 'lost' | 'offline' | 'submitting' | 'won';
-
-type PollMode = 'delayed' | 'idle' | 'paused' | 'polling';
+  'applied' | 'checking' | 'error' | 'idle' | 'lost' | 'offline' | 'submitting' | 'won';
 
 function useJobAcceptance(jobId: string, userId: string) {
   const isOnline = useOnlineStatus();
   const queryClient = useQueryClient();
-  const [pollMode, setPollMode] = useState<PollMode>('idle');
-  const [wasScheduled, setWasScheduled] = useState(false);
-  const isPolling = pollMode === 'polling';
-
-  const statusQuery = useQuery({
-    enabled: isPolling && isOnline,
-    queryFn: ({ signal }) => getJobAcceptanceStatus(jobId, signal),
-    queryKey: jobsQueryKeys.acceptance(jobId),
+  const ownCandidateQuery = useQuery({
+    enabled: Boolean(jobId && userId),
+    queryFn: ({ signal }) => getOwnJobCandidate(jobId, signal),
+    queryKey: jobsQueryKeys.ownCandidate(jobId),
     refetchInterval: (query) =>
-      isPolling && query.state.data?.status !== 'finished' && query.state.status !== 'error'
-        ? POLL_INTERVAL_MS
-        : false,
+      query.state.data?.status === 'pending' ? CANDIDATE_STATUS_POLL_INTERVAL_MS : false,
     retry: false,
   });
-
   const acceptMutation = useMutation({
     mutationFn: () => acceptJob(jobId),
     onSuccess: () => {
-      setWasScheduled(true);
-      queryClient.removeQueries({ queryKey: jobsQueryKeys.acceptance(jobId) });
-      setPollMode(isOnline ? 'polling' : 'paused');
+      const candidate: JobCandidate = {
+        createdAt: new Date().toISOString(),
+        operatorId: userId,
+        status: 'pending',
+      };
+      queryClient.setQueryData(jobsQueryKeys.ownCandidate(jobId), candidate);
     },
   });
 
-  useEffect(() => {
-    const pausePolling = () => {
-      void queryClient.cancelQueries({ queryKey: jobsQueryKeys.acceptance(jobId) });
-      setPollMode((currentMode) => (currentMode === 'polling' ? 'paused' : currentMode));
-    };
-
-    window.addEventListener('offline', pausePolling);
-
-    return () => {
-      window.removeEventListener('offline', pausePolling);
-      void queryClient.cancelQueries({ queryKey: jobsQueryKeys.acceptance(jobId) });
-    };
-  }, [jobId, queryClient]);
-
-  useEffect(() => {
-    if (!isPolling || statusQuery.data?.status === 'finished') {
-      return;
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      void queryClient.cancelQueries({ queryKey: jobsQueryKeys.acceptance(jobId) });
-      setPollMode('delayed');
-    }, POLL_TIMEOUT_MS);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [isPolling, jobId, queryClient, statusQuery.data?.status]);
-
-  useEffect(() => {
-    if (statusQuery.data?.status !== 'finished') {
-      return;
-    }
-
-    queryClient.setQueryData<Job>(jobsQueryKeys.detail(jobId), (job) =>
-      job ? { ...job, filled: true } : job,
-    );
-    queryClient.setQueriesData<Job[]>({ queryKey: jobsQueryKeys.lists() }, (jobs) =>
-      jobs?.map((job) => (job.id === jobId ? { ...job, filled: true } : job)),
-    );
-    void queryClient.invalidateQueries({ queryKey: jobsQueryKeys.lists(), refetchType: 'none' });
-    if (statusQuery.data.operatorId === userId) {
-      void queryClient.invalidateQueries({ queryKey: acceptedJobsQueryKeys.all });
-    }
-  }, [jobId, queryClient, statusQuery.data, userId]);
-
   const submitAcceptance = () => {
-    if (!isOnline) {
-      setPollMode('paused');
+    if (!isOnline || ownCandidateQuery.data) {
       return;
     }
 
@@ -96,13 +42,11 @@ function useJobAcceptance(jobId: string, userId: string) {
 
   const tryAgain = () => {
     if (!isOnline) {
-      setPollMode('paused');
       return;
     }
 
-    if (wasScheduled) {
-      setPollMode('polling');
-      void statusQuery.refetch();
+    if (ownCandidateQuery.isError) {
+      void ownCandidateQuery.refetch();
       return;
     }
 
@@ -111,26 +55,24 @@ function useJobAcceptance(jobId: string, userId: string) {
 
   let state: AcceptanceViewState = 'idle';
 
-  if (acceptMutation.isPending) {
+  if (ownCandidateQuery.data?.status === 'pending') {
+    state = 'applied';
+  } else if (ownCandidateQuery.data?.status === 'confirmed') {
+    state = 'won';
+  } else if (ownCandidateQuery.data?.status === 'rejected') {
+    state = 'lost';
+  } else if (acceptMutation.isPending) {
     state = 'submitting';
-  } else if (acceptMutation.isError) {
+  } else if (!isOnline) {
+    state = 'offline';
+  } else if (acceptMutation.isError || ownCandidateQuery.isError) {
     state = 'error';
-  } else if (wasScheduled) {
-    if (!isOnline || pollMode === 'paused') {
-      state = 'offline';
-    } else if (statusQuery.data?.status === 'finished') {
-      state = statusQuery.data.operatorId === userId ? 'won' : 'lost';
-    } else if (pollMode === 'delayed') {
-      state = 'delayed';
-    } else if (statusQuery.isError && !statusQuery.isFetching) {
-      state = 'error';
-    } else {
-      state = 'confirming';
-    }
+  } else if (ownCandidateQuery.isPending) {
+    state = 'checking';
   }
 
   return {
-    error: acceptMutation.error ?? statusQuery.error,
+    error: acceptMutation.error ?? ownCandidateQuery.error,
     isOnline,
     state,
     submitAcceptance,

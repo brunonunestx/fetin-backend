@@ -16,10 +16,24 @@ function getJobAvailability(job: Job, now = new Date()): JobAvailability {
   return 'available';
 }
 
-function getAvailableJobs(jobs: Job[], now = new Date()): Job[] {
-  return jobs
-    .filter((job) => getJobAvailability(job, now) === 'available')
-    .sort((first, second) => Date.parse(first.startsAt) - Date.parse(second.startsAt));
+function getAvailableJobs(
+  jobs: Job[],
+  now = new Date(),
+  order: 'date' | 'distance' = 'date',
+): Job[] {
+  const availableJobs = jobs.filter((job) => getJobAvailability(job, now) === 'available');
+
+  if (order === 'distance') {
+    return availableJobs.sort(
+      (first, second) =>
+        (first.distanceKm ?? Number.POSITIVE_INFINITY) -
+        (second.distanceKm ?? Number.POSITIVE_INFINITY),
+    );
+  }
+
+  return availableJobs.sort(
+    (first, second) => Date.parse(first.startsAt) - Date.parse(second.startsAt),
+  );
 }
 
 function normalizeSearch(value: string): string {

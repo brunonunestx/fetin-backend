@@ -28,6 +28,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FormError } from '@/features/auth/components/form-error';
 import { useAuth } from '@/features/auth/use-auth';
+import { CandidateProfileCard } from '@/features/jobs/components/candidate-profile-card';
 import { WinnerProfileCard } from '@/features/jobs/components/winner-profile-card';
 import {
   formatAddress,
@@ -36,10 +37,13 @@ import {
   formatJobDate,
   formatJobTime,
 } from '@/features/jobs/job-formatters';
-import { getJob } from '@/features/jobs/jobs-api';
+import { getJob, listJobCandidates } from '@/features/jobs/jobs-api';
 import { jobsQueryKeys } from '@/features/jobs/jobs-query-keys';
 import { getJobAvailability } from '@/features/jobs/job-rules';
-import { useCancelJobMutation } from '@/features/jobs/owner-job-mutations';
+import {
+  useCancelJobMutation,
+  useConfirmCandidateMutation,
+} from '@/features/jobs/owner-job-mutations';
 import { useOwnerJobStatus } from '@/features/jobs/use-owner-job-status';
 
 function OwnerJobDetailsLoading() {
@@ -67,9 +71,21 @@ function OwnerJobDetailsPage() {
   const shouldTrackWinner =
     belongsToOwner && (availability === 'available' || availability === 'filled');
   const statusQuery = useOwnerJobStatus(jobId, shouldTrackWinner);
+  const candidatesQuery = useQuery({
+    enabled: Boolean(jobId && belongsToOwner),
+    queryFn: ({ signal }) => listJobCandidates(jobId, signal),
+    queryKey: jobsQueryKeys.candidates(jobId),
+    refetchInterval: availability === 'available' ? 4_000 : false,
+  });
   const cancelMutation = useCancelJobMutation();
+  const confirmCandidateMutation = useConfirmCandidateMutation(jobId);
+  const candidates = candidatesQuery.data ?? [];
+  const confirmedCandidate = candidates.find((candidate) => candidate.status === 'confirmed');
   const winnerId =
-    statusQuery.data?.status === 'finished' ? statusQuery.data.operatorId : undefined;
+    statusQuery.data?.status === 'finished'
+      ? statusQuery.data.operatorId
+      : confirmedCandidate?.operatorId;
+  const remainingCandidates = candidates.filter((candidate) => candidate.operatorId !== winnerId);
   const canCancel = Boolean(
     jobQuery.data && !jobQuery.data.cancelledAt && Date.parse(jobQuery.data.startsAt) > openedAt,
   );
@@ -179,14 +195,38 @@ function OwnerJobDetailsPage() {
                   id="tracking-heading"
                 >
                   <UsersRound aria-hidden="true" className="size-5 text-primary" />
-                  Acompanhamento
+                  Candidatos {candidates.length > 0 ? `(${candidates.length})` : null}
                 </h3>
 
-                {availability === 'available' && !winnerId ? (
+                {candidatesQuery.isPending ? (
+                  <p className="mt-3 flex items-center gap-2 font-bold text-muted-foreground">
+                    <LoaderCircle aria-hidden="true" className="size-5 animate-spin" />
+                    Carregando candidatos...
+                  </p>
+                ) : null}
+
+                {candidatesQuery.isError ? (
+                  <div className="mt-3 rounded-2xl border border-destructive/25 bg-destructive/8 p-4">
+                    <p className="font-bold text-destructive">
+                      Não conseguimos carregar os candidatos.
+                    </p>
+                    <Button
+                      className="mt-3"
+                      onClick={() => void candidatesQuery.refetch()}
+                      size="sm"
+                      type="button"
+                      variant="outline"
+                    >
+                      Tentar novamente
+                    </Button>
+                  </div>
+                ) : null}
+
+                {candidatesQuery.isSuccess && candidates.length === 0 && !winnerId ? (
                   <div className="mt-3 rounded-2xl border border-warning bg-warning p-4 text-warning-foreground">
-                    <h4 className="font-extrabold">Aguardando um trabalhador</h4>
+                    <h4 className="font-extrabold">Nenhuma candidatura ainda</h4>
                     <p className="mt-1 text-sm leading-relaxed">
-                      Esta tela verifica automaticamente quando alguém conseguir a vaga.
+                      Quando alguém demonstrar interesse, o perfil aparecerá aqui automaticamente.
                     </p>
                   </div>
                 ) : null}
@@ -208,7 +248,7 @@ function OwnerJobDetailsPage() {
                   </div>
                 ) : null}
 
-                {availability === 'filled' && statusQuery.isPending ? (
+                {availability === 'filled' && statusQuery.isPending && !winnerId ? (
                   <p className="mt-3 flex items-center gap-2 font-bold text-muted-foreground">
                     <LoaderCircle aria-hidden="true" className="size-5 animate-spin" />
                     Carregando trabalhador...
@@ -221,9 +261,38 @@ function OwnerJobDetailsPage() {
                   </div>
                 ) : null}
 
+                {remainingCandidates.length > 0 ? (
+                  <div className="mt-3 space-y-3" aria-label="Lista de candidatos">
+                    {winnerId ? <h4 className="pt-2 font-extrabold">Outros candidatos</h4> : null}
+                    {remainingCandidates.map((candidate) => (
+                      <CandidateProfileCard
+                        candidate={candidate}
+                        disabled={
+                          availability !== 'available' ||
+                          Boolean(winnerId) ||
+                          confirmCandidateMutation.isPending ||
+                          confirmCandidateMutation.isSuccess
+                        }
+                        isSelecting={
+                          confirmCandidateMutation.variables === candidate.operatorId &&
+                          (confirmCandidateMutation.isPending || confirmCandidateMutation.isSuccess)
+                        }
+                        key={candidate.operatorId}
+                        onSelect={() => confirmCandidateMutation.mutate(candidate.operatorId)}
+                      />
+                    ))}
+                  </div>
+                ) : null}
+
+                {confirmCandidateMutation.error ? (
+                  <div className="mt-3">
+                    <FormError error={confirmCandidateMutation.error} />
+                  </div>
+                ) : null}
+
                 {availability === 'cancelled' ? (
                   <p className="mt-3 rounded-2xl bg-muted p-4 font-bold text-muted-foreground">
-                    Esta vaga foi cancelada e não recebe mais aceites.
+                    Esta vaga foi cancelada e não recebe mais candidaturas.
                   </p>
                 ) : null}
 
@@ -257,7 +326,7 @@ function OwnerJobDetailsPage() {
                     <AlertDialogHeader>
                       <AlertDialogTitle>Cancelar esta vaga?</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Ela deixará de receber aceites. Esta ação não poderá ser desfeita pelo
+                        Ela deixará de receber candidaturas. Esta ação não poderá ser desfeita pelo
                         aplicativo.
                       </AlertDialogDescription>
                     </AlertDialogHeader>

@@ -31,6 +31,8 @@ const upcomingJob: AcceptedJob = {
     address: 'Rua das Flores, 120',
     city: 'Pouso Alegre',
     id: 'local-1',
+    latitude: null,
+    longitude: null,
     name: 'Casa da Maria',
     ownerId: '33333333-3333-4333-8333-333333333333',
     state: 'MG',

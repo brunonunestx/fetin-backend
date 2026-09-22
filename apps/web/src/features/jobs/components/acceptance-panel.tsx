@@ -1,11 +1,4 @@
-import {
-  CheckCircle2,
-  ClockAlert,
-  LoaderCircle,
-  RefreshCw,
-  UserRoundX,
-  WifiOff,
-} from 'lucide-react';
+import { CheckCircle2, LoaderCircle, RefreshCw, UserRoundX, WifiOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { AcceptanceViewState } from '@/features/jobs/use-job-acceptance';
 import { isApiError } from '@/lib/api/api-error';
@@ -18,46 +11,46 @@ type AcceptancePanelProps = {
 };
 
 const content = {
-  confirming: {
-    description: 'Estamos aguardando a confirmação. Isso costuma levar poucos segundos.',
-    icon: LoaderCircle,
-    title: 'Confirmando seu aceite',
-    tone: 'warning',
+  applied: {
+    description: 'Agora é só aguardar o contratante escolher quem fará o trabalho.',
+    icon: CheckCircle2,
+    title: 'Candidatura enviada',
+    tone: 'success',
   },
-  delayed: {
-    description: 'A confirmação continua em andamento. Você pode verificar o resultado novamente.',
-    icon: ClockAlert,
-    title: 'Está demorando um pouco',
+  checking: {
+    description: 'Estamos verificando se você já se candidatou a este trabalho.',
+    icon: LoaderCircle,
+    title: 'Verificando candidatura',
     tone: 'warning',
   },
   error: {
-    description: 'Não conseguimos confirmar o resultado agora.',
+    description: 'Não conseguimos enviar sua candidatura agora.',
     icon: RefreshCw,
     title: 'Não foi possível continuar',
     tone: 'error',
   },
-  lost: {
-    description: 'Este trabalho já foi confirmado para outra pessoa.',
-    icon: UserRoundX,
-    title: 'Outra pessoa conseguiu primeiro',
-    tone: 'info',
-  },
   offline: {
-    description: 'Conecte-se à internet para continuar verificando o resultado.',
+    description: 'Conecte-se à internet para verificar ou enviar sua candidatura.',
     icon: WifiOff,
     title: 'Você está sem conexão',
     tone: 'error',
   },
   submitting: {
-    description: 'Estamos enviando seu pedido para a fila.',
+    description: 'Estamos enviando seu interesse ao contratante.',
     icon: LoaderCircle,
-    title: 'Enviando seu aceite',
+    title: 'Enviando candidatura',
     tone: 'warning',
   },
+  lost: {
+    description: 'O contratante escolheu outra pessoa para realizar este trabalho.',
+    icon: UserRoundX,
+    title: 'Outra pessoa foi escolhida',
+    tone: 'info',
+  },
   won: {
-    description: 'O contratante poderá ver seu perfil para dar continuidade ao serviço.',
+    description: 'O contratante escolheu você para realizar este trabalho.',
     icon: CheckCircle2,
-    title: 'A vaga é sua',
+    title: 'Você foi escolhido',
     tone: 'success',
   },
 } as const;
@@ -65,7 +58,7 @@ const content = {
 function AcceptancePanel({ error, onTryAgain, state }: AcceptancePanelProps) {
   const stateContent = content[state];
   const Icon = stateContent.icon;
-  const canTryAgain = state === 'delayed' || state === 'error' || state === 'offline';
+  const canTryAgain = state === 'error' || state === 'offline';
   const errorMessage = state === 'error' && isApiError(error) ? error.message : null;
 
   return (
@@ -83,14 +76,14 @@ function AcceptancePanel({ error, onTryAgain, state }: AcceptancePanelProps) {
         aria-hidden="true"
         className={cn(
           'mx-auto size-9',
-          (state === 'confirming' || state === 'submitting') && 'animate-spin',
+          (state === 'checking' || state === 'submitting') && 'animate-spin',
         )}
       />
       <h2 className="mt-3 text-xl font-extrabold">{stateContent.title}</h2>
       <p className="mt-2 text-base leading-relaxed">{errorMessage ?? stateContent.description}</p>
       {canTryAgain ? (
         <Button className="mt-5 w-full" onClick={onTryAgain} type="button" variant="outline">
-          {state === 'error' ? 'Tentar novamente' : 'Verificar novamente'}
+          Tentar novamente
         </Button>
       ) : null}
     </section>

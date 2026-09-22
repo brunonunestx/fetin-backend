@@ -40,4 +40,21 @@ describe('local form schema', () => {
 
     expect(result.success).toBe(false);
   });
+
+  it('includes coordinates only after the contractor chooses the current location', () => {
+    const values = localFormSchema.parse({
+      address: 'Rua A, 10',
+      city: 'Itajubá',
+      name: 'Loja',
+      state: 'MG',
+      zipCode: '37500-000',
+    });
+
+    expect(toCreateLocationInput(values, { latitude: -22.425, longitude: -45.453 })).toMatchObject({
+      latitude: -22.425,
+      longitude: -45.453,
+    });
+    expect(toCreateLocationInput(values)).not.toHaveProperty('latitude');
+    expect(toCreateLocationInput(values)).not.toHaveProperty('longitude');
+  });
 });

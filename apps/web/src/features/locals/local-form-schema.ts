@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { CreateLocationInput } from '@/features/locals/local-types';
+import type { CurrentCoordinates } from '@/lib/geolocation';
 
 function formatZipCode(value: string): string {
   const digits = value.replace(/\D/g, '').slice(0, 8);
@@ -31,13 +32,26 @@ const localFormSchema = z.object({
 
 type LocalFormValues = z.infer<typeof localFormSchema>;
 
-function toCreateLocationInput(values: LocalFormValues): CreateLocationInput {
-  return {
+function toCreateLocationInput(
+  values: LocalFormValues,
+  coordinates?: CurrentCoordinates,
+): CreateLocationInput {
+  const input = {
     address: values.address.trim(),
     city: values.city.trim(),
     name: values.name.trim(),
     state: values.state.trim().toUpperCase(),
     zipCode: formatZipCode(values.zipCode),
+  };
+
+  if (!coordinates) {
+    return input;
+  }
+
+  return {
+    ...input,
+    latitude: coordinates.latitude,
+    longitude: coordinates.longitude,
   };
 }
 

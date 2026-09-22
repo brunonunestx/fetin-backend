@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { LoaderCircle } from 'lucide-react';
+import { LocateFixed, LoaderCircle, MapPinCheck, X } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +13,8 @@ import {
 } from '@/features/locals/local-form-schema';
 import { useCreateLocationMutation } from '@/features/locals/locals-mutations';
 import type { WorkLocation } from '@/features/locals/local-types';
+import { getGeolocationErrorMessage } from '@/lib/geolocation';
+import { useCurrentLocation } from '@/lib/use-current-location';
 
 function FieldError({ id, message }: { id: string; message?: string }) {
   return message ? (
@@ -24,6 +26,7 @@ function FieldError({ id, message }: { id: string; message?: string }) {
 
 function LocalForm({ onCreated }: { onCreated: (location: WorkLocation) => void }) {
   const createMutation = useCreateLocationMutation();
+  const currentLocation = useCurrentLocation();
   const {
     clearErrors,
     formState: { errors },
@@ -37,7 +40,9 @@ function LocalForm({ onCreated }: { onCreated: (location: WorkLocation) => void 
   const stateField = register('state');
   const zipCodeField = register('zipCode');
   const submit = handleSubmit((values) => {
-    createMutation.mutate(toCreateLocationInput(values), { onSuccess: onCreated });
+    createMutation.mutate(toCreateLocationInput(values, currentLocation.coordinates), {
+      onSuccess: onCreated,
+    });
   });
 
   return (
@@ -132,6 +137,75 @@ function LocalForm({ onCreated }: { onCreated: (location: WorkLocation) => void 
           <FieldError id="local-state-error" message={errors.state?.message} />
         </div>
       </div>
+
+      <section
+        aria-labelledby="location-coordinates-heading"
+        className="rounded-2xl border border-border bg-secondary/60 p-4"
+      >
+        <div className="flex items-start gap-3">
+          {currentLocation.status === 'success' ? (
+            <MapPinCheck aria-hidden="true" className="mt-0.5 size-6 shrink-0 text-primary" />
+          ) : (
+            <LocateFixed aria-hidden="true" className="mt-0.5 size-6 shrink-0 text-primary" />
+          )}
+          <div className="min-w-0 flex-1">
+            <h2 className="font-extrabold" id="location-coordinates-heading">
+              Localização no mapa (opcional)
+            </h2>
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+              Use quando você estiver neste endereço. Isso ajuda trabalhadores a encontrar vagas
+              próximas.
+            </p>
+          </div>
+        </div>
+
+        {currentLocation.status === 'success' ? (
+          <div className="mt-4" role="status">
+            <p className="text-sm font-bold text-success-foreground">
+              Localização adicionada ao cadastro.
+            </p>
+            <Button
+              className="mt-2"
+              disabled={createMutation.isPending}
+              onClick={currentLocation.clear}
+              size="sm"
+              type="button"
+              variant="ghost"
+            >
+              <X aria-hidden="true" />
+              Remover localização
+            </Button>
+          </div>
+        ) : (
+          <Button
+            className="mt-4 w-full"
+            disabled={currentLocation.status === 'loading' || createMutation.isPending}
+            onClick={() => void currentLocation.request()}
+            type="button"
+            variant="outline"
+          >
+            {currentLocation.status === 'loading' ? (
+              <>
+                <LoaderCircle aria-hidden="true" className="animate-spin" />
+                Buscando localização...
+              </>
+            ) : (
+              <>
+                <LocateFixed aria-hidden="true" />
+                {currentLocation.status === 'error'
+                  ? 'Tentar localização novamente'
+                  : 'Usar localização atual'}
+              </>
+            )}
+          </Button>
+        )}
+
+        {currentLocation.status === 'error' ? (
+          <p className="mt-3 text-sm font-bold text-destructive" role="alert">
+            {getGeolocationErrorMessage(currentLocation.error)}
+          </p>
+        ) : null}
+      </section>
 
       <FormError error={createMutation.error} />
 

@@ -170,15 +170,17 @@ Usar API HTTP em uma página HTTPS causa bloqueio de conteúdo misto no navegado
 
 - cadastro, login e preenchimento do perfil;
 - busca e visualização de vagas disponíveis;
-- aceite de vaga com confirmação e resultado assíncrono;
+- busca opcional de vagas por proximidade usando a localização atual;
+- candidatura a vagas com acompanhamento da decisão do contratante;
 - histórico de trabalhos futuros e anteriores;
 - visualização do perfil do contratante.
 
 ### Contratante
 
 - cadastro, login e preenchimento do perfil;
-- cadastro e consulta de locais;
+- cadastro e consulta de locais, com localização atual opcional;
 - publicação, acompanhamento e cancelamento de vagas;
+- visualização dos candidatos e escolha do trabalhador;
 - visualização do trabalhador vencedor.
 
 ### Aplicativo
@@ -196,28 +198,27 @@ Antes da feira, deixe a API online, duas contas com perfis completos e pelo meno
 1. **Problema — 20 segundos:** explique a dificuldade de conectar profissionais informais e contratantes por uma interface acessível.
 2. **Dois caminhos — 20 segundos:** abra o TrampoFácil instalado e mostre as entradas “Buscar um serviço” e “Contratar alguém”.
 3. **Contratante — 50 segundos:** entre na conta, mostre o local e publique uma vaga em passos curtos.
-4. **Trabalhador — 50 segundos:** troque de conta/aparelho, encontre a vaga, abra os detalhes e confirme o aceite.
-5. **Resultado — 40 segundos:** volte ao contratante, mostre a vaga preenchida e abra o perfil do vencedor.
+4. **Trabalhador — 50 segundos:** troque de conta/aparelho, encontre a vaga, abra os detalhes e envie a candidatura.
+5. **Resultado — 40 segundos:** volte ao contratante, compare os candidatos, escolha um trabalhador e abra seu perfil.
 6. **PWA e acessibilidade — 30 segundos:** destaque instalação, funcionamento do app shell sem conexão, textos claros e alvos de toque grandes.
-7. **Fechamento — 20 segundos:** reforce que o protótipo reduz atrito para os dois públicos e pode evoluir para candidatura com aprovação.
+7. **Fechamento — 20 segundos:** reforce que o protótipo reduz atrito para os dois públicos e permite uma escolha clara e segura.
 
 ## Fora de escopo do MVP
 
 - chat e notificações push;
 - avaliações e reputação;
 - upload de fotos;
-- geolocalização e mapas;
+- mapas, geocodificação de endereços e localização persistente do trabalhador;
 - recuperação de senha;
 - edição ou exclusão de locais;
 - refresh token, cookies de sessão e autenticação social;
-- aprovação manual de candidatos pelo contratante;
 - pagamentos dentro do aplicativo.
 
 ## Limitações conhecidas
 
-- o primeiro trabalhador cujo aceite for processado vence a vaga; o contratante ainda não escolhe entre candidatos;
 - o JWT é persistido no armazenamento local por se tratar de um protótipo acadêmico;
 - os dados das vagas exigem conexão; offline é disponibilizado somente o app shell;
+- a busca por proximidade mostra apenas vagas cujos locais possuem coordenadas cadastradas;
 - a instalação no iPhone depende de “Compartilhar → Adicionar à Tela de Início”, sem prompt programático;
 - a experiência foi projetada e testada prioritariamente para Android e iPhone, não para desktop;
 - o certificado HTTPS do preview local é autoassinado e não substitui a validação em uma URL pública confiável.

@@ -34,6 +34,19 @@ export class JobSubscriptionController {
     });
   }
 
+  @Get(':id/candidates/me')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('operator')
+  async getOwnCandidate(
+    @Param('id', ParseUUIDPipe) jobId: string,
+    @Req() request: AuthenticatedRequest,
+  ): Promise<JobCandidateDto | null> {
+    return this.jobSubscriptionService.findCandidateByOperator(
+      jobId,
+      request.user.userId,
+    );
+  }
+
   @Get(':id/candidates')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('local_owner')

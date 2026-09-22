@@ -5,6 +5,8 @@ const location = {
   address: 'Rua das Flores, 120',
   city: 'Pouso Alegre',
   id: '33333333-3333-4333-8333-333333333333',
+  latitude: null,
+  longitude: null,
   name: 'Padaria Central',
   ownerId: ownerProfile.id,
   state: 'MG',
@@ -25,7 +27,7 @@ const job = {
   value: '180.50',
 };
 
-test('tells a worker when another person wins the job', async ({ page }) => {
+test('keeps the candidacy confirmation stable without polling a winner', async ({ page }) => {
   await mockAuthenticatedSession(page, workerProfile);
   await page.route(`**/api/jobs/${job.id}`, async (route) => {
     await route.fulfill({
@@ -37,25 +39,27 @@ test('tells a worker when another person wins the job', async ({ page }) => {
   await page.route(`**/api/jobs/${job.id}/accept`, async (route) => {
     await route.fulfill({ body: '', status: 201 });
   });
+  await page.route(`**/api/jobs/${job.id}/candidates/me`, async (route) => {
+    await route.fulfill({ body: 'null', contentType: 'application/json', status: 200 });
+  });
+  let acceptanceStatusRequests = 0;
   await page.route(`**/api/jobs/${job.id}/accepted`, async (route) => {
-    await route.fulfill({
-      body: JSON.stringify({ operatorId: 'another-worker', status: 'finished' }),
-      contentType: 'application/json',
-      status: 200,
-    });
+    acceptanceStatusRequests += 1;
+    await route.fulfill({ body: JSON.stringify({ status: 'pending' }), status: 200 });
   });
 
   await page.goto(`/trabalhos/${job.id}`);
-  await page.getByRole('button', { name: 'Quero este trabalho' }).click();
-  await page.getByRole('button', { name: 'Sim, quero este trabalho' }).click();
+  await page.getByRole('button', { name: 'Quero me candidatar' }).click();
+  await page.getByRole('button', { name: 'Sim, enviar candidatura' }).click();
 
-  await expect(
-    page.getByRole('heading', { name: 'Outra pessoa conseguiu primeiro' }),
-  ).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Candidatura enviada' })).toBeVisible();
+  await page.waitForTimeout(1_600);
+  expect(acceptanceStatusRequests).toBe(0);
 });
 
-test('lets a contractor open the winning worker profile', async ({ page }) => {
-  const filledJob = { ...job, filled: true };
+test('lets a contractor choose a candidate and open the worker profile', async ({ page }) => {
+  let candidateStatus: 'confirmed' | 'pending' = 'pending';
+  let accepted = false;
   const publicWorkerProfile = {
     bio: workerProfile.bio,
     id: workerProfile.id,
@@ -66,18 +70,41 @@ test('lets a contractor open the winning worker profile', async ({ page }) => {
   await mockAuthenticatedSession(page, ownerProfile);
   await page.route(`**/api/jobs/${job.id}`, async (route) => {
     await route.fulfill({
-      body: JSON.stringify(filledJob),
+      body: JSON.stringify(job),
       contentType: 'application/json',
       status: 200,
     });
   });
   await page.route(`**/api/jobs/${job.id}/accepted`, async (route) => {
     await route.fulfill({
-      body: JSON.stringify({ operatorId: workerProfile.id, status: 'finished' }),
+      body: JSON.stringify(
+        accepted ? { operatorId: workerProfile.id, status: 'finished' } : { status: 'pending' },
+      ),
       contentType: 'application/json',
       status: 200,
     });
   });
+  await page.route(`**/api/jobs/${job.id}/candidates`, async (route) => {
+    await route.fulfill({
+      body: JSON.stringify([
+        {
+          createdAt: '2026-08-23T12:00:00.000Z',
+          operatorId: workerProfile.id,
+          status: candidateStatus,
+        },
+      ]),
+      contentType: 'application/json',
+      status: 200,
+    });
+  });
+  await page.route(
+    `**/api/jobs/${job.id}/candidates/${workerProfile.id}/confirm`,
+    async (route) => {
+      candidateStatus = 'confirmed';
+      accepted = true;
+      await route.fulfill({ body: '', status: 201 });
+    },
+  );
   await page.route(`**/api/profile/${workerProfile.id}`, async (route) => {
     await route.fulfill({
       body: JSON.stringify(publicWorkerProfile),
@@ -87,6 +114,11 @@ test('lets a contractor open the winning worker profile', async ({ page }) => {
   });
 
   await page.goto(`/painel/vagas/${job.id}`);
+  const candidate = page.getByRole('article', { name: 'Candidato: João da Silva' });
+  await expect(candidate).toBeVisible();
+  await candidate.getByRole('button', { name: 'Escolher trabalhador' }).click();
+  await page.getByRole('button', { name: 'Sim, escolher trabalhador' }).click();
+
   const winner = page.getByRole('article', { name: 'Trabalhador confirmado' });
   await expect(winner.getByText('João da Silva')).toBeVisible();
   await winner.getByRole('link', { name: 'Ver perfil completo' }).click();

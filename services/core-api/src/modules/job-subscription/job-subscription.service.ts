@@ -53,6 +53,18 @@ export class JobSubscriptionService {
     }
   }
 
+  async findCandidateByOperator(
+    jobId: string,
+    operatorId: string,
+  ): Promise<JobCandidateDto | null> {
+    await this.jobService.findById(jobId);
+    const candidate = await this.prisma.jobCandidate.findUnique({
+      where: { jobId_operatorId: { jobId, operatorId } },
+    });
+
+    return candidate ? toJobCandidateDto(candidate) : null;
+  }
+
   async listCandidates(
     jobId: string,
     ownerId: string,

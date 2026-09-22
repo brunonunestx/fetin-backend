@@ -9,6 +9,7 @@ import { sessionStore } from '@/lib/session-store';
 import { renderApp } from '@/test/render-app';
 
 const ownerId = '11111111-1111-4111-8111-111111111111';
+const originalGeolocation = window.navigator.geolocation;
 
 const ownerProfile = {
   age: null,
@@ -27,6 +28,8 @@ const location: WorkLocation = {
   city: 'Pouso Alegre',
   createdAt: '2026-08-22T12:00:00.000Z',
   id: '22222222-2222-4222-8222-222222222222',
+  latitude: null,
+  longitude: null,
   name: 'Padaria Central',
   ownerId,
   state: 'MG',
@@ -47,6 +50,10 @@ const availableJob: Job = {
   value: '180.50',
 };
 
+function setGeolocation(value: Geolocation | undefined) {
+  Object.defineProperty(window.navigator, 'geolocation', { configurable: true, value });
+}
+
 describe('contractor locations flow', () => {
   let mock: AxiosMockAdapter;
 
@@ -58,6 +65,7 @@ describe('contractor locations flow', () => {
   });
 
   afterEach(() => {
+    setGeolocation(originalGeolocation);
     mock.restore();
   });
 
@@ -100,11 +108,19 @@ describe('contractor locations flow', () => {
   });
 
   it('validates, formats and creates a location using mobile-friendly fields', async () => {
+    setGeolocation({
+      getCurrentPosition: (success) =>
+        success({
+          coords: { latitude: -22.234567, longitude: -45.987654 },
+        } as GeolocationPosition),
+    } as Geolocation);
     const user = userEvent.setup();
     mock.onPost('/locals').reply((config) => {
       expect(JSON.parse(String(config.data))).toEqual({
         address: 'Rua das Flores, 120',
         city: 'Pouso Alegre',
+        latitude: -22.23457,
+        longitude: -45.98765,
         name: 'Padaria Central',
         state: 'MG',
         zipCode: '37550-000',
@@ -134,6 +150,8 @@ describe('contractor locations flow', () => {
 
     expect(zipCodeInput).toHaveValue('37550-000');
     expect(screen.getByLabelText('UF')).toHaveValue('MG');
+    await user.click(screen.getByRole('button', { name: 'Usar localização atual' }));
+    expect(await screen.findByText('Localização adicionada ao cadastro.')).toBeVisible();
     await user.click(screen.getByRole('button', { name: 'Cadastrar local' }));
 
     await waitFor(() => expect(router.state.location.pathname).toBe(`/locais/${location.id}`));

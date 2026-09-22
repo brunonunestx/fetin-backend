@@ -13,6 +13,8 @@ const baseJob: Job = {
     address: 'Rua das Flores, 120',
     city: 'Pouso Alegre',
     id: 'local-1',
+    latitude: null,
+    longitude: null,
     name: 'Casa da Maria',
     ownerId: 'owner-1',
     state: 'MG',
@@ -52,5 +54,13 @@ describe('job rules', () => {
     expect(searchJobs([baseJob, bricklayerJob], 'pintura')).toEqual([baseJob]);
     expect(searchJobs([baseJob, bricklayerJob], 'PEDREIRO')).toEqual([bricklayerJob]);
     expect(searchJobs([baseJob, bricklayerJob], 'pouso')).toEqual([baseJob, bricklayerJob]);
+  });
+
+  it('sorts geolocated jobs by distance when proximity mode is active', () => {
+    const now = new Date('2026-09-01T12:00:00.000Z');
+    const farJob = { ...baseJob, distanceKm: 18, id: 'far' };
+    const nearJob = { ...baseJob, distanceKm: 2.4, id: 'near' };
+
+    expect(getAvailableJobs([farJob, nearJob], now, 'distance')).toEqual([nearJob, farJob]);
   });
 });

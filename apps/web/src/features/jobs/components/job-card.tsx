@@ -1,7 +1,8 @@
-import { CalendarDays, Clock3, MapPin } from 'lucide-react';
+import { CalendarDays, Clock3, LocateFixed, MapPin } from 'lucide-react';
 import { Link } from 'react-router';
 import {
   formatCurrency,
+  formatDistance,
   formatDuration,
   formatJobTime,
   formatShortJobDate,
@@ -23,6 +24,15 @@ function JobCard({ job }: { job: Job }) {
       </div>
 
       <dl className="mt-4 grid grid-cols-2 gap-x-3 gap-y-3 text-sm">
+        {job.distanceKm !== undefined ? (
+          <div className="col-span-2 flex items-center gap-2 rounded-lg bg-secondary px-3 py-2 text-secondary-foreground">
+            <LocateFixed aria-hidden="true" className="size-5 shrink-0 text-primary" />
+            <div>
+              <dt className="sr-only">Distância</dt>
+              <dd className="font-extrabold">{formatDistance(job.distanceKm)}</dd>
+            </div>
+          </div>
+        ) : null}
         <div className="flex items-center gap-2">
           <CalendarDays aria-hidden="true" className="size-5 shrink-0 text-primary" />
           <div>

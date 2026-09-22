@@ -184,6 +184,43 @@ describe('JobSubscriptionService', () => {
     });
   });
 
+  describe('findCandidateByOperator', () => {
+    it('returns only the candidacy for the authenticated operator', async () => {
+      const deps = createDeps();
+      const candidate = createCandidate({ status: 'CONFIRMED' });
+      deps.jobService.findById.mockResolvedValue(createJob());
+      deps.prisma.jobCandidate.findUnique.mockResolvedValue(candidate);
+      const service = createService(deps);
+
+      const result = await service.findCandidateByOperator(
+        'job-1',
+        'operator-1',
+      );
+
+      expect(deps.prisma.jobCandidate.findUnique).toHaveBeenCalledWith({
+        where: {
+          jobId_operatorId: { jobId: 'job-1', operatorId: 'operator-1' },
+        },
+      });
+      expect(result).toEqual({
+        operatorId: 'operator-1',
+        status: JobCandidateStatus.CONFIRMED,
+        createdAt: candidate.createdAt,
+      });
+    });
+
+    it('returns null when the operator has not applied', async () => {
+      const deps = createDeps();
+      deps.jobService.findById.mockResolvedValue(createJob());
+      deps.prisma.jobCandidate.findUnique.mockResolvedValue(null);
+      const service = createService(deps);
+
+      await expect(
+        service.findCandidateByOperator('job-1', 'operator-1'),
+      ).resolves.toBeNull();
+    });
+  });
+
   describe('listCandidates', () => {
     it('throws 403 when the local does not belong to the owner', async () => {
       const deps = createDeps();

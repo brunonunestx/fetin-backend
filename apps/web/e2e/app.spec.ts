@@ -91,7 +91,7 @@ test('guides an incomplete worker through profile setup', async ({ page }) => {
   await expect(page.getByText('Nenhum trabalho disponível agora')).toBeVisible();
 });
 
-test('lets a worker discover and accept an available job', async ({ page }) => {
+test('lets a worker discover and apply to an available job', async ({ page }) => {
   const workerId = '11111111-1111-4111-8111-111111111111';
   const job = {
     cancelledAt: null,
@@ -104,6 +104,8 @@ test('lets a worker discover and accept an available job', async ({ page }) => {
       address: 'Rua das Flores, 120',
       city: 'Pouso Alegre',
       id: 'local-1',
+      latitude: null,
+      longitude: null,
       name: 'Casa da Maria',
       ownerId: '33333333-3333-4333-8333-333333333333',
       state: 'MG',
@@ -114,8 +116,7 @@ test('lets a worker discover and accept an available job', async ({ page }) => {
     title: 'Pintura residencial',
     value: '180.50',
   };
-  let statusRequests = 0;
-
+  let ownCandidate: { createdAt: string; operatorId: string; status: 'pending' } | null = null;
   await page.addInitScript({
     content: "globalThis.localStorage.setItem('trampofacil.access-token', 'worker-token');",
   });
@@ -158,32 +159,38 @@ test('lets a worker discover and accept an available job', async ({ page }) => {
     });
   });
   await page.route(`**/api/jobs/${job.id}/accept`, async (route) => {
+    ownCandidate = {
+      createdAt: '2026-08-23T12:00:00.000Z',
+      operatorId: workerId,
+      status: 'pending',
+    };
     await route.fulfill({
       body: '',
       status: 201,
     });
   });
-  await page.route(`**/api/jobs/${job.id}/accepted`, async (route) => {
-    statusRequests += 1;
+  await page.route(`**/api/jobs/${job.id}/candidates/me`, async (route) => {
     await route.fulfill({
-      body: JSON.stringify(
-        statusRequests === 1 ? { status: 'pending' } : { operatorId: workerId, status: 'finished' },
-      ),
+      body: JSON.stringify(ownCandidate),
       contentType: 'application/json',
       status: 200,
     });
   });
-
   await page.goto('/trabalhos');
 
   await expect(page.getByRole('link', { name: 'Ver trabalho: Pintura residencial' })).toBeVisible();
   await page.getByRole('link', { name: 'Ver trabalho: Pintura residencial' }).click();
   await expect(page.getByText(/Rua das Flores, 120/)).toBeVisible();
-  await page.getByRole('button', { name: 'Quero este trabalho' }).click();
-  await expect(page.getByRole('heading', { name: 'Quer aceitar este trabalho?' })).toBeVisible();
-  await page.getByRole('button', { name: 'Sim, quero este trabalho' }).click();
+  await page.getByRole('button', { name: 'Quero me candidatar' }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Quer se candidatar a este trabalho?' }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Sim, enviar candidatura' }).click();
 
-  await expect(page.getByRole('heading', { name: 'A vaga é sua' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Candidatura enviada' })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Candidatura enviada' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Quero me candidatar' })).toHaveCount(0);
 });
 
 test('shows the worker accepted-jobs history', async ({ page }) => {
@@ -198,6 +205,8 @@ test('shows the worker accepted-jobs history', async ({ page }) => {
       address: 'Rua das Flores, 120',
       city: 'Pouso Alegre',
       id: 'local-1',
+      latitude: null,
+      longitude: null,
       name: 'Casa da Maria',
       ownerId: '33333333-3333-4333-8333-333333333333',
       state: 'MG',
@@ -287,6 +296,8 @@ test('lets a contractor create a location and publish its first job', async ({ p
     city: 'Pouso Alegre',
     createdAt: '2026-08-22T12:00:00.000Z',
     id: '22222222-2222-4222-8222-222222222222',
+    latitude: null,
+    longitude: null,
     name: 'Padaria Central',
     ownerId,
     state: 'MG',
@@ -398,6 +409,9 @@ test('lets a contractor create a location and publish its first job', async ({ p
       status: 200,
     });
   });
+  await page.route(`**/api/jobs/${job.id}/candidates`, async (route) => {
+    await route.fulfill({ body: '[]', contentType: 'application/json', status: 200 });
+  });
 
   await page.goto('/locais');
 
@@ -440,6 +454,8 @@ test('lets a contractor publish, review and cancel a job', async ({ page }) => {
     city: 'Pouso Alegre',
     createdAt: '2026-08-22T12:00:00.000Z',
     id: '22222222-2222-4222-8222-222222222222',
+    latitude: null,
+    longitude: null,
     name: 'Padaria Central',
     ownerId,
     state: 'MG',
@@ -526,6 +542,9 @@ test('lets a contractor publish, review and cancel a job', async ({ page }) => {
       contentType: 'application/json',
       status: 200,
     });
+  });
+  await page.route(`**/api/jobs/${jobId}/candidates`, async (route) => {
+    await route.fulfill({ body: '[]', contentType: 'application/json', status: 200 });
   });
   await page.route(`**/api/jobs/${jobId}/cancel`, async (route) => {
     expect(route.request().method()).toBe('PATCH');

@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import AxiosMockAdapter from 'axios-mock-adapter';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { jobsQueryKeys } from '@/features/jobs/jobs-query-keys';
-import type { Job, JobMutationResult } from '@/features/jobs/job-types';
+import type { Job, JobCandidate, JobMutationResult } from '@/features/jobs/job-types';
 import type { WorkLocation } from '@/features/locals/local-types';
 import { httpClient } from '@/lib/api/http-client';
 import { sessionStore } from '@/lib/session-store';
@@ -29,6 +29,8 @@ const location: WorkLocation = {
   city: 'Pouso Alegre',
   createdAt: '2026-08-22T12:00:00.000Z',
   id: '22222222-2222-4222-8222-222222222222',
+  latitude: null,
+  longitude: null,
   name: 'Padaria Central',
   ownerId,
   state: 'MG',
@@ -65,12 +67,15 @@ function toMutationResult(job: Job): JobMutationResult {
 
 describe('contractor jobs flow', () => {
   let mock: AxiosMockAdapter;
+  let candidates: JobCandidate[];
 
   beforeEach(() => {
+    candidates = [];
     mock = new AxiosMockAdapter(httpClient);
     sessionStore.setAccessToken('owner-token');
     mock.onGet('/auth/me').reply(200, { type: 'local_owner', userId: ownerId });
     mock.onGet('/profile').reply(200, ownerProfile);
+    mock.onGet(/\/jobs\/[^/]+\/candidates$/).reply(() => [200, candidates]);
   });
 
   afterEach(() => {
@@ -223,5 +228,43 @@ describe('contractor jobs flow', () => {
       'href',
       `/perfis/${workerId}`,
     );
+  });
+
+  it('lists each worker once and lets the contractor choose a candidate', async () => {
+    const user = userEvent.setup();
+    let acceptanceStatus: { status: 'pending' } | { operatorId: string; status: 'finished' } = {
+      status: 'pending',
+    };
+    candidates = [
+      {
+        createdAt: '2026-08-23T12:00:00.000Z',
+        operatorId: workerId,
+        status: 'pending',
+      },
+    ];
+    mock.onGet(`/jobs/${openJob.id}`).reply(200, openJob);
+    mock.onGet(`/jobs/${openJob.id}/accepted`).reply(() => [200, acceptanceStatus]);
+    mock.onGet(`/profile/${workerId}`).reply(200, {
+      bio: 'Pedreiro com experiência em reformas.',
+      id: workerId,
+      name: 'João da Silva',
+      position: 'Pedreiro',
+      type: 'operator',
+    });
+    mock.onPost(`/jobs/${openJob.id}/candidates/${workerId}/confirm`).reply(() => {
+      candidates = [{ ...candidates[0], status: 'confirmed' }];
+      acceptanceStatus = { operatorId: workerId, status: 'finished' };
+      return [201];
+    });
+    renderApp(`/painel/vagas/${openJob.id}`);
+
+    const candidateCard = await screen.findByRole('article', { name: 'Candidato: João da Silva' });
+    expect(within(candidateCard).getByText('Pedreiro')).toBeVisible();
+    await user.click(within(candidateCard).getByRole('button', { name: 'Escolher trabalhador' }));
+    expect(await screen.findByRole('heading', { name: 'Escolher João da Silva?' })).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Sim, escolher trabalhador' }));
+
+    expect(await screen.findByRole('article', { name: 'Trabalhador confirmado' })).toBeVisible();
+    expect(mock.history.post).toHaveLength(1);
   });
 });

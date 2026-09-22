@@ -19,6 +19,11 @@ const timeFormatter = new Intl.DateTimeFormat('pt-BR', {
   minute: '2-digit',
 });
 
+const distanceFormatter = new Intl.NumberFormat('pt-BR', {
+  maximumFractionDigits: 1,
+  minimumFractionDigits: 0,
+});
+
 function formatCurrency(value: string): string {
   return currencyFormatter.format(Number(value));
 }
@@ -51,6 +56,14 @@ function formatDuration(durationMinutes: number): string {
   return parts.join(' e ');
 }
 
+function formatDistance(distanceKm: number): string {
+  if (distanceKm < 1) {
+    return 'A menos de 1 km';
+  }
+
+  return `A ${distanceFormatter.format(distanceKm)} km`;
+}
+
 function formatAddress({
   address,
   city,
@@ -68,6 +81,7 @@ function formatAddress({
 export {
   formatAddress,
   formatCurrency,
+  formatDistance,
   formatDuration,
   formatJobDate,
   formatJobTime,
