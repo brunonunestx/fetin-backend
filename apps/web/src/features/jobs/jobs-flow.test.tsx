@@ -1,7 +1,9 @@
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import AxiosMockAdapter from 'axios-mock-adapter';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { acceptedJobsQueryKeys } from '@/features/accepted-jobs/accepted-jobs-query-keys';
+import { jobsQueryKeys } from '@/features/jobs/jobs-query-keys';
 import type { Job, JobCandidate } from '@/features/jobs/job-types';
 import { httpClient } from '@/lib/api/http-client';
 import { sessionStore } from '@/lib/session-store';
@@ -56,11 +58,11 @@ function setGeolocation(value: Geolocation | undefined) {
 
 describe('worker job flow', () => {
   let mock: AxiosMockAdapter;
-  let ownCandidate: JobCandidate | null;
+  let ownCandidate: JobCandidate | '';
 
   beforeEach(() => {
     setOnline(true);
-    ownCandidate = null;
+    ownCandidate = '';
     mock = new AxiosMockAdapter(httpClient);
     sessionStore.setAccessToken('worker-token');
     mock.onGet('/auth/me').reply(200, { type: 'operator', userId: workerId });
@@ -250,6 +252,42 @@ describe('worker job flow', () => {
     expect(await screen.findByRole('heading', { name: 'Candidatura enviada' })).toBeVisible();
     expect(screen.queryByRole('button', { name: 'Quero me candidatar' })).not.toBeInTheDocument();
     expect(mock.history.post).toHaveLength(0);
+  });
+
+  it('updates the job and accepted history when the worker is chosen', async () => {
+    ownCandidate = {
+      createdAt: '2026-08-23T12:00:00.000Z',
+      operatorId: workerId,
+      status: 'confirmed',
+    };
+    mock.onGet(`/jobs/${availableJob.id}`).reply(200, availableJob);
+    const { queryClient } = renderApp(`/trabalhos/${availableJob.id}`);
+    queryClient.setQueryData(jobsQueryKeys.list(), [availableJob]);
+    queryClient.setQueryData(acceptedJobsQueryKeys.list(), []);
+
+    expect(await screen.findByRole('heading', { name: 'Você foi escolhido' })).toBeVisible();
+    await waitFor(() =>
+      expect(queryClient.getQueryData<Job[]>(jobsQueryKeys.list())?.[0]?.filled).toBe(true),
+    );
+    expect(queryClient.getQueryState(acceptedJobsQueryKeys.list())?.isInvalidated).toBe(true);
+  });
+
+  it('removes the filled job from discovery when another worker is chosen', async () => {
+    ownCandidate = {
+      createdAt: '2026-08-23T12:00:00.000Z',
+      operatorId: workerId,
+      status: 'rejected',
+    };
+    mock.onGet(`/jobs/${availableJob.id}`).reply(200, availableJob);
+    const { queryClient } = renderApp(`/trabalhos/${availableJob.id}`);
+    queryClient.setQueryData(jobsQueryKeys.list(), [availableJob]);
+
+    expect(
+      await screen.findByRole('heading', { name: 'Outra pessoa foi escolhida' }),
+    ).toBeVisible();
+    await waitFor(() =>
+      expect(queryClient.getQueryData<Job[]>(jobsQueryKeys.list())?.[0]?.filled).toBe(true),
+    );
   });
 
   it('allows retrying when the candidacy request fails', async () => {

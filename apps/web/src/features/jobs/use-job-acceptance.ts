@@ -1,4 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
+import { acceptedJobsQueryKeys } from '@/features/accepted-jobs/accepted-jobs-query-keys';
+import { updateJobInCaches } from '@/features/jobs/job-cache';
 import { acceptJob, getOwnJobCandidate } from '@/features/jobs/jobs-api';
 import { jobsQueryKeys } from '@/features/jobs/jobs-query-keys';
 import type { JobCandidate } from '@/features/jobs/job-types';
@@ -31,6 +34,20 @@ function useJobAcceptance(jobId: string, userId: string) {
       queryClient.setQueryData(jobsQueryKeys.ownCandidate(jobId), candidate);
     },
   });
+  const candidateStatus = ownCandidateQuery.data?.status;
+
+  useEffect(() => {
+    if (candidateStatus !== 'confirmed' && candidateStatus !== 'rejected') {
+      return;
+    }
+
+    updateJobInCaches(queryClient, jobId, (job) => ({ ...job, filled: true }));
+    void queryClient.invalidateQueries({ queryKey: jobsQueryKeys.lists(), refetchType: 'none' });
+
+    if (candidateStatus === 'confirmed') {
+      void queryClient.invalidateQueries({ queryKey: acceptedJobsQueryKeys.all });
+    }
+  }, [candidateStatus, jobId, queryClient]);
 
   const submitAcceptance = () => {
     if (!isOnline || ownCandidateQuery.data) {
@@ -55,11 +72,11 @@ function useJobAcceptance(jobId: string, userId: string) {
 
   let state: AcceptanceViewState = 'idle';
 
-  if (ownCandidateQuery.data?.status === 'pending') {
+  if (candidateStatus === 'pending') {
     state = 'applied';
-  } else if (ownCandidateQuery.data?.status === 'confirmed') {
+  } else if (candidateStatus === 'confirmed') {
     state = 'won';
-  } else if (ownCandidateQuery.data?.status === 'rejected') {
+  } else if (candidateStatus === 'rejected') {
     state = 'lost';
   } else if (acceptMutation.isPending) {
     state = 'submitting';

@@ -59,7 +59,15 @@ test('keeps the candidacy confirmation stable without polling a winner', async (
 
 test('lets a contractor choose a candidate and open the worker profile', async ({ page }) => {
   let candidateStatus: 'confirmed' | 'pending' = 'pending';
+  let otherCandidateStatus: 'pending' | 'rejected' = 'pending';
   let accepted = false;
+  const otherWorker = {
+    bio: 'Auxiliar com experiência em estoque.',
+    id: '55555555-5555-4555-8555-555555555555',
+    name: 'Ana Lima',
+    position: 'Auxiliar de estoque',
+    type: 'operator',
+  };
   const publicWorkerProfile = {
     bio: workerProfile.bio,
     id: workerProfile.id,
@@ -92,6 +100,11 @@ test('lets a contractor choose a candidate and open the worker profile', async (
           operatorId: workerProfile.id,
           status: candidateStatus,
         },
+        {
+          createdAt: '2026-08-23T12:05:00.000Z',
+          operatorId: otherWorker.id,
+          status: otherCandidateStatus,
+        },
       ]),
       contentType: 'application/json',
       status: 200,
@@ -101,6 +114,7 @@ test('lets a contractor choose a candidate and open the worker profile', async (
     `**/api/jobs/${job.id}/candidates/${workerProfile.id}/confirm`,
     async (route) => {
       candidateStatus = 'confirmed';
+      otherCandidateStatus = 'rejected';
       accepted = true;
       await route.fulfill({ body: '', status: 201 });
     },
@@ -108,6 +122,13 @@ test('lets a contractor choose a candidate and open the worker profile', async (
   await page.route(`**/api/profile/${workerProfile.id}`, async (route) => {
     await route.fulfill({
       body: JSON.stringify(publicWorkerProfile),
+      contentType: 'application/json',
+      status: 200,
+    });
+  });
+  await page.route(`**/api/profile/${otherWorker.id}`, async (route) => {
+    await route.fulfill({
+      body: JSON.stringify(otherWorker),
       contentType: 'application/json',
       status: 200,
     });
@@ -121,6 +142,8 @@ test('lets a contractor choose a candidate and open the worker profile', async (
 
   const winner = page.getByRole('article', { name: 'Trabalhador confirmado' });
   await expect(winner.getByText('João da Silva')).toBeVisible();
+  const rejectedCandidate = page.getByRole('article', { name: 'Candidato: Ana Lima' });
+  await expect(rejectedCandidate.getByText('Não escolhido')).toBeVisible();
   await winner.getByRole('link', { name: 'Ver perfil completo' }).click();
 
   await expect(page).toHaveURL(new RegExp(`/perfis/${workerProfile.id}$`));

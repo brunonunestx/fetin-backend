@@ -11,6 +11,7 @@ import { renderApp } from '@/test/render-app';
 
 const ownerId = '11111111-1111-4111-8111-111111111111';
 const workerId = '99999999-9999-4999-8999-999999999999';
+const otherWorkerId = '88888888-8888-4888-8888-888888888888';
 
 const ownerProfile = {
   age: null,
@@ -241,6 +242,11 @@ describe('contractor jobs flow', () => {
         operatorId: workerId,
         status: 'pending',
       },
+      {
+        createdAt: '2026-08-23T12:05:00.000Z',
+        operatorId: otherWorkerId,
+        status: 'pending',
+      },
     ];
     mock.onGet(`/jobs/${openJob.id}`).reply(200, openJob);
     mock.onGet(`/jobs/${openJob.id}/accepted`).reply(() => [200, acceptanceStatus]);
@@ -251,8 +257,18 @@ describe('contractor jobs flow', () => {
       position: 'Pedreiro',
       type: 'operator',
     });
+    mock.onGet(`/profile/${otherWorkerId}`).reply(200, {
+      bio: 'Auxiliar com experiência em estoque.',
+      id: otherWorkerId,
+      name: 'Ana Lima',
+      position: 'Auxiliar de estoque',
+      type: 'operator',
+    });
     mock.onPost(`/jobs/${openJob.id}/candidates/${workerId}/confirm`).reply(() => {
-      candidates = [{ ...candidates[0], status: 'confirmed' }];
+      candidates = [
+        { ...candidates[0], status: 'confirmed' },
+        { ...candidates[1], status: 'rejected' },
+      ];
       acceptanceStatus = { operatorId: workerId, status: 'finished' };
       return [201];
     });
@@ -265,6 +281,8 @@ describe('contractor jobs flow', () => {
     await user.click(screen.getByRole('button', { name: 'Sim, escolher trabalhador' }));
 
     expect(await screen.findByRole('article', { name: 'Trabalhador confirmado' })).toBeVisible();
+    const rejectedCandidate = await screen.findByRole('article', { name: 'Candidato: Ana Lima' });
+    expect(within(rejectedCandidate).getByText('Não escolhido')).toBeVisible();
     expect(mock.history.post).toHaveLength(1);
   });
 });

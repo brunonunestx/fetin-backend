@@ -90,7 +90,9 @@ async function getOwnJobCandidate(
   signal?: AbortSignal,
 ): Promise<JobCandidate | null> {
   const response = await httpClient.get<unknown>(`/jobs/${jobId}/candidates/me`, { signal });
-  return parseApiResponse(jobCandidateSchema.nullable(), response.data);
+  const candidate = response.data === '' ? null : response.data;
+
+  return parseApiResponse(jobCandidateSchema.nullable(), candidate);
 }
 
 async function listJobCandidates(jobId: string, signal?: AbortSignal): Promise<JobCandidate[]> {
