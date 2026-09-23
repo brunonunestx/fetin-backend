@@ -29,14 +29,14 @@ function AcceptedJobsSection({
   const headingId = upcoming ? 'upcoming-jobs-heading' : 'previous-jobs-heading';
 
   return (
-    <section aria-labelledby={headingId} className="px-4 pb-7">
+    <section aria-labelledby={headingId} className="px-4 pb-7 sm:px-6 lg:px-8">
       <div className="mb-3 flex items-center justify-between gap-3 px-1">
         <h2 className="text-lg font-extrabold" id={headingId}>
           {title}
         </h2>
         <span className="text-sm font-bold text-muted-foreground">{jobs.length}</span>
       </div>
-      <div className="space-y-3">
+      <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
         {jobs.map((job) => (
           <AcceptedJobCard job={job} key={job.jobId} upcoming={upcoming} />
         ))}
@@ -59,12 +59,12 @@ function AcceptedJobsPage() {
   }
 
   return (
-    <MobileShell>
+    <MobileShell bottomNavigation={<AccountNavigation activeHref="/historico" type={user.type} />}>
       <PageHeader title="Histórico" />
       <main className="flex flex-1 flex-col">
-        <section className="px-5 pt-6 pb-5">
-          <h2 className="text-3xl leading-tight font-extrabold">Seus trabalhos.</h2>
-          <p className="mt-2 text-base leading-relaxed text-muted-foreground">
+        <section className="px-5 pt-6 pb-5 sm:px-6 lg:px-8 lg:pt-8">
+          <h2 className="text-3xl leading-tight font-extrabold lg:text-4xl">Seus trabalhos.</h2>
+          <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
             Consulte os próximos serviços e relembre os trabalhos que já passaram.
           </p>
         </section>
@@ -105,7 +105,6 @@ function AcceptedJobsPage() {
           </>
         ) : null}
       </main>
-      <AccountNavigation activeHref="/historico" type={user.type} />
     </MobileShell>
   );
 }

@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { MapPinned } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router';
+import { AccountNavigation } from '@/components/shared/account-navigation';
 import { MobileShell } from '@/components/shared/mobile-shell';
 import { PageHeader } from '@/components/shared/page-header';
 import { ErrorState, StatePanel } from '@/components/shared/state-panel';
@@ -29,9 +30,11 @@ function PublishJobPage() {
   }
 
   return (
-    <MobileShell>
+    <MobileShell
+      bottomNavigation={<AccountNavigation activeHref="/painel" desktopOnly type={user.type} />}
+    >
       <PageHeader backHref="/painel" title="Nova vaga" />
-      <main className="flex flex-1 flex-col px-5 py-6">
+      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-5 py-6 sm:px-6 lg:px-8 lg:py-10">
         {locationsQuery.isPending ? (
           <p className="py-10 text-center text-base font-bold text-muted-foreground">
             Carregando seus locais...

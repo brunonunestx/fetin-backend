@@ -18,7 +18,7 @@ function MyProfilePage() {
   }
 
   return (
-    <MobileShell>
+    <MobileShell bottomNavigation={<AccountNavigation activeHref="/perfil" type={user.type} />}>
       <PageHeader
         action={
           isEditing ? null : (
@@ -33,7 +33,7 @@ function MyProfilePage() {
 
       <main className="flex-1">
         {isEditing ? (
-          <div className="px-5 py-7">
+          <div className="mx-auto w-full max-w-2xl px-5 py-7 sm:px-6 lg:py-10">
             <ProfileForm
               onCancel={() => setIsEditing(false)}
               onSaved={() => setIsEditing(false)}
@@ -52,7 +52,7 @@ function MyProfilePage() {
               }}
               profile={profile}
             />
-            <div className="space-y-3 px-5 pb-8">
+            <div className="mx-auto w-full max-w-4xl space-y-3 px-5 pb-8 sm:px-6 lg:max-w-5xl lg:px-8">
               <PwaInstallCard />
               <Button className="w-full" onClick={logout} type="button" variant="outline">
                 Sair da conta
@@ -61,8 +61,6 @@ function MyProfilePage() {
           </>
         )}
       </main>
-
-      <AccountNavigation activeHref="/perfil" type={user.type} />
     </MobileShell>
   );
 }

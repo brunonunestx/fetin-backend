@@ -25,6 +25,13 @@ export default defineConfig({
       name: 'mobile-safari',
       use: { ...devices['iPhone 15'] },
     },
+    {
+      name: 'desktop-chrome',
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { height: 900, width: 1440 },
+      },
+    },
   ],
   webServer: {
     command: 'pnpm preview:https',

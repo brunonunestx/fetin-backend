@@ -15,8 +15,22 @@ const navigationByUserType: Record<UserType, readonly NavigationItem[]> = {
   ],
 };
 
-function AccountNavigation({ activeHref, type }: { activeHref: string; type: UserType }) {
-  return <BottomNavigation activeHref={activeHref} items={navigationByUserType[type]} />;
+function AccountNavigation({
+  activeHref,
+  desktopOnly = false,
+  type,
+}: {
+  activeHref: string;
+  desktopOnly?: boolean;
+  type: UserType;
+}) {
+  return (
+    <BottomNavigation
+      activeHref={activeHref}
+      desktopOnly={desktopOnly}
+      items={navigationByUserType[type]}
+    />
+  );
 }
 
 export { AccountNavigation };

@@ -60,7 +60,7 @@ function AcceptedJobCard({ job, upcoming }: { job: AcceptedJob; upcoming: boolea
         </div>
       </dl>
 
-      <div className="mt-5 grid grid-cols-2 gap-2 border-t border-border pt-4">
+      <div className="mt-5 grid grid-cols-1 gap-2 border-t border-border pt-4 min-[400px]:grid-cols-2">
         <Button asChild size="sm" variant="outline">
           <Link to={`/perfis/${job.local.ownerId}`}>
             <UserRound aria-hidden="true" />

@@ -1,4 +1,4 @@
-# TrampoFácil — escopo e jornadas do frontend mobile
+# TrampoFácil — escopo e jornadas do frontend
 
 ## Status do documento
 
@@ -13,7 +13,7 @@ O MVP tem duas experiências:
 - **Trabalhador:** encontra trabalhos, consulta os detalhes, aceita uma oportunidade e acompanha os trabalhos conquistados.
 - **Contratante:** cadastra locais, publica vagas, acompanha o preenchimento e consulta o trabalhador selecionado.
 
-O aplicativo será um PWA voltado exclusivamente para celulares Android e iPhone. Não haverá uma experiência desktop específica nesta primeira versão.
+O aplicativo será uma PWA instalável em celulares Android e iPhone e uma aplicação web responsiva em tablets e computadores. As jornadas e funcionalidades permanecem iguais entre as plataformas, com navegação e composição adaptadas ao espaço disponível.
 
 ## Decisões confirmadas
 
@@ -106,7 +106,6 @@ O aplicativo será um PWA voltado exclusivamente para celulares Android e iPhone
 - Notificações push.
 - Pagamentos dentro do aplicativo.
 - Publicação nas lojas Google Play e App Store.
-- Experiência específica para desktop.
 
 Essas funcionalidades podem ser adicionadas depois sem alterar as jornadas centrais do MVP.
 

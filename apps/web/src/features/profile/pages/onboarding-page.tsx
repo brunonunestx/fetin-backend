@@ -19,7 +19,7 @@ function OnboardingPage() {
   return (
     <MobileShell>
       <PageHeader title="Complete seu perfil" />
-      <main className="flex-1 px-5 py-6">
+      <main className="mx-auto w-full max-w-2xl flex-1 px-5 py-6 sm:px-6 lg:py-10">
         <p className="text-sm font-extrabold tracking-wide text-primary uppercase">
           Só falta uma etapa
         </p>

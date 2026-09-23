@@ -32,7 +32,7 @@ function OfflineScreen() {
       className="fixed inset-0 z-[60] overflow-y-auto bg-background"
       role="dialog"
     >
-      <main className="safe-area-top mx-auto flex min-h-dvh w-full max-w-[30rem] flex-col items-center justify-center px-6 pb-8 text-center">
+      <main className="safe-area-top mx-auto flex min-h-dvh w-full max-w-xl flex-col items-center justify-center px-6 pb-8 text-center">
         <Brand />
         <span className="mt-9 flex size-20 items-center justify-center rounded-full bg-secondary text-primary">
           <WifiOff aria-hidden="true" className="size-10" />

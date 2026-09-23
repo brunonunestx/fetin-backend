@@ -48,7 +48,7 @@ function LoginPage() {
   return (
     <MobileShell>
       <PageHeader backHref="/boas-vindas" title="Entrar" />
-      <main className="flex-1 px-5 py-7">
+      <main className="mx-auto w-full max-w-xl flex-1 px-5 py-7 sm:px-6 lg:py-10">
         <h2 className="text-3xl leading-tight font-extrabold">Bom ter você de volta.</h2>
         <p className="mt-2 text-base leading-relaxed text-muted-foreground">
           Use o e-mail e a senha que você cadastrou.

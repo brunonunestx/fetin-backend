@@ -1,12 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { MapPin } from 'lucide-react';
 import { Link, useParams } from 'react-router';
+import { AccountNavigation } from '@/components/shared/account-navigation';
 import { LoadingList } from '@/components/shared/loading-list';
 import { MobileShell } from '@/components/shared/mobile-shell';
 import { PageHeader } from '@/components/shared/page-header';
 import { ErrorState, StatePanel } from '@/components/shared/state-panel';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/features/auth/use-auth';
 import { formatAddress } from '@/features/jobs/job-formatters';
 import { listJobs } from '@/features/jobs/jobs-api';
 import { jobsQueryKeys } from '@/features/jobs/jobs-query-keys';
@@ -25,6 +27,7 @@ function LocationDetailsLoading() {
 }
 
 function LocationDetailsPage() {
+  const { user } = useAuth();
   const { locationId = '' } = useParams();
   const locationQuery = useQuery({
     enabled: Boolean(locationId),
@@ -38,7 +41,11 @@ function LocationDetailsPage() {
   });
 
   return (
-    <MobileShell>
+    <MobileShell
+      bottomNavigation={
+        user ? <AccountNavigation activeHref="/locais" desktopOnly type={user.type} /> : null
+      }
+    >
       <PageHeader backHref="/locais" title="Detalhes do local" />
       <main className="flex flex-1 flex-col">
         {locationQuery.isPending ? <LocationDetailsLoading /> : null}
@@ -52,8 +59,8 @@ function LocationDetailsPage() {
         ) : null}
 
         {locationQuery.data ? (
-          <>
-            <section className="px-5 py-7">
+          <div className="lg:grid lg:grid-cols-[minmax(18rem,0.75fr)_minmax(0,1.25fr)]">
+            <section className="px-5 py-7 sm:px-6 lg:px-8 lg:py-10">
               <span className="flex size-12 items-center justify-center rounded-xl bg-secondary text-primary">
                 <MapPin aria-hidden="true" className="size-6" />
               </span>
@@ -70,8 +77,11 @@ function LocationDetailsPage() {
               </Button>
             </section>
 
-            <section aria-labelledby="local-jobs-heading" className="border-t border-border pt-6">
-              <div className="flex items-center justify-between gap-3 px-5">
+            <section
+              aria-labelledby="local-jobs-heading"
+              className="border-t border-border pt-6 lg:border-t-0 lg:border-l lg:py-10"
+            >
+              <div className="flex items-center justify-between gap-3 px-5 sm:px-6 lg:px-8">
                 <div>
                   <p className="text-sm font-extrabold tracking-wide text-primary uppercase">
                     Neste endereço
@@ -105,14 +115,14 @@ function LocationDetailsPage() {
               ) : null}
 
               {jobsQuery.data && jobsQuery.data.length > 0 ? (
-                <div className="space-y-3 px-4 py-5">
+                <div className="grid gap-3 px-4 py-5 sm:px-6 lg:px-8 xl:grid-cols-2">
                   {jobsQuery.data.map((job) => (
                     <LocalJobSummary job={job} key={job.id} />
                   ))}
                 </div>
               ) : null}
             </section>
-          </>
+          </div>
         ) : null}
       </main>
     </MobileShell>

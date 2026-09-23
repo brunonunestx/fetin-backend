@@ -25,7 +25,7 @@ function LocationsListPage() {
   }
 
   return (
-    <MobileShell>
+    <MobileShell bottomNavigation={<AccountNavigation activeHref="/locais" type={user.type} />}>
       <PageHeader
         action={
           <Button asChild size="sm">
@@ -38,9 +38,11 @@ function LocationsListPage() {
         title="Meus locais"
       />
       <main className="flex flex-1 flex-col">
-        <section className="px-5 pt-6 pb-5">
-          <h2 className="text-3xl leading-tight font-extrabold">Onde o trabalho acontece?</h2>
-          <p className="mt-2 text-base leading-relaxed text-muted-foreground">
+        <section className="px-5 pt-6 pb-5 sm:px-6 lg:px-8 lg:pt-8">
+          <h2 className="text-3xl leading-tight font-extrabold lg:text-4xl">
+            Onde o trabalho acontece?
+          </h2>
+          <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
             Cadastre seus endereços para publicar vagas no local certo.
           </p>
         </section>
@@ -68,7 +70,7 @@ function LocationsListPage() {
         ) : null}
 
         {locationsQuery.data && locationsQuery.data.length > 0 ? (
-          <section aria-labelledby="locations-heading" className="px-4 pb-7">
+          <section aria-labelledby="locations-heading" className="px-4 pb-7 sm:px-6 lg:px-8">
             <div className="mb-3 flex items-center justify-between gap-3 px-1">
               <h2 className="text-lg font-extrabold" id="locations-heading">
                 Locais cadastrados
@@ -77,7 +79,7 @@ function LocationsListPage() {
                 {locationsQuery.data.length}
               </span>
             </div>
-            <div className="space-y-3">
+            <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
               {locationsQuery.data.map((location) => (
                 <LocationCard key={location.id} location={location} />
               ))}
@@ -85,7 +87,6 @@ function LocationsListPage() {
           </section>
         ) : null}
       </main>
-      <AccountNavigation activeHref="/locais" type={user.type} />
     </MobileShell>
   );
 }

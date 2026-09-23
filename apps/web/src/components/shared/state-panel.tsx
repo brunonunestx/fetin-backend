@@ -14,7 +14,7 @@ type StatePanelProps = {
 
 function StatePanel({ action, description, icon, title }: StatePanelProps) {
   return (
-    <section className="flex flex-1 flex-col items-center justify-center px-6 py-12 text-center">
+    <section className="mx-auto flex w-full max-w-xl flex-1 flex-col items-center justify-center px-6 py-12 text-center lg:py-16">
       <span className="mb-4 flex size-16 items-center justify-center rounded-2xl bg-secondary text-primary">
         {icon ?? <SearchX aria-hidden="true" className="size-8" />}
       </span>

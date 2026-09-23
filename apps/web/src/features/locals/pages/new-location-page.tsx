@@ -1,15 +1,24 @@
 import { useNavigate } from 'react-router';
+import { AccountNavigation } from '@/components/shared/account-navigation';
 import { MobileShell } from '@/components/shared/mobile-shell';
 import { PageHeader } from '@/components/shared/page-header';
+import { useAuth } from '@/features/auth/use-auth';
 import { LocalForm } from '@/features/locals/components/local-form';
 
 function NewLocationPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  if (!user) {
+    return null;
+  }
 
   return (
-    <MobileShell>
+    <MobileShell
+      bottomNavigation={<AccountNavigation activeHref="/locais" desktopOnly type={user.type} />}
+    >
       <PageHeader backHref="/locais" title="Novo local" />
-      <main className="flex-1 px-5 py-6">
+      <main className="mx-auto w-full max-w-2xl flex-1 px-5 py-6 sm:px-6 lg:py-10">
         <p className="text-sm font-extrabold tracking-wide text-primary uppercase">
           Endereço do serviço
         </p>

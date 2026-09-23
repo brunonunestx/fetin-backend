@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router';
+import { AccountNavigation } from '@/components/shared/account-navigation';
 import { ErrorState } from '@/components/shared/state-panel';
 import { MobileShell } from '@/components/shared/mobile-shell';
 import { PageHeader } from '@/components/shared/page-header';
@@ -33,7 +34,17 @@ function PublicProfilePage() {
   const backHref = user ? homeRouteByUserType[user.type] : '/';
 
   return (
-    <MobileShell>
+    <MobileShell
+      bottomNavigation={
+        user ? (
+          <AccountNavigation
+            activeHref={homeRouteByUserType[user.type]}
+            desktopOnly
+            type={user.type}
+          />
+        ) : null
+      }
+    >
       <PageHeader backHref={backHref} title="Perfil" />
       <main className="flex flex-1 flex-col">
         {profileQuery.isPending ? <PublicProfileLoading /> : null}

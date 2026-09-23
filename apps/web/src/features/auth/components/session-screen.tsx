@@ -9,7 +9,7 @@ function SessionLoadingScreen() {
     <MobileShell>
       <main
         aria-label="Verificando sua sessão"
-        className="safe-area-top flex flex-1 flex-col items-center justify-center px-6 text-center"
+        className="safe-area-top mx-auto flex w-full max-w-xl flex-1 flex-col items-center justify-center px-6 text-center"
       >
         <Brand />
         <LoaderCircle aria-hidden="true" className="mt-8 size-8 animate-spin text-primary" />
@@ -24,7 +24,7 @@ function SessionErrorScreen() {
 
   return (
     <MobileShell>
-      <main className="safe-area-top flex flex-1 flex-col items-center justify-center px-6 text-center">
+      <main className="safe-area-top mx-auto flex w-full max-w-xl flex-1 flex-col items-center justify-center px-6 text-center">
         <Brand />
         <h1 className="mt-8 text-2xl font-extrabold">Não foi possível abrir sua conta</h1>
         <p className="mt-3 max-w-80 text-base leading-relaxed text-muted-foreground">

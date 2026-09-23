@@ -48,7 +48,6 @@ export default defineConfig(({ mode }) => {
           ],
           lang: 'pt-BR',
           name: 'TrampoFácil',
-          orientation: 'portrait-primary',
           scope: '/',
           short_name: 'TrampoFácil',
           start_url: '/',

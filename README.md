@@ -1,6 +1,6 @@
 # TrampoFácil
 
-PWA mobile para aproximar trabalhadores de serviços informais e pessoas que precisam contratar. O produto foi pensado para uso simples, com textos diretos, alvos de toque grandes e jornadas separadas para trabalhador e contratante.
+Aplicação web responsiva e PWA para aproximar trabalhadores de serviços informais e pessoas que precisam contratar. O produto foi pensado para uso simples, com textos diretos, alvos de toque grandes e jornadas separadas para trabalhador e contratante.
 
 ## Estrutura do repositório
 
@@ -112,7 +112,7 @@ Execute estes comandos a partir de `apps/`:
 | `corepack pnpm lint`         | Executa o ESLint sem aceitar avisos.                    |
 | `corepack pnpm typecheck`    | Valida o TypeScript sem emitir arquivos.                |
 | `corepack pnpm test`         | Executa testes unitários e de componentes.              |
-| `corepack pnpm test:e2e`     | Executa Playwright em Mobile Chrome e Mobile Safari.    |
+| `corepack pnpm test:e2e`     | Executa Playwright em Mobile Chrome, Mobile Safari e Desktop Chrome. |
 | `corepack pnpm format`       | Formata os arquivos do workspace.                       |
 | `corepack pnpm format:check` | Verifica formatação sem alterar arquivos.               |
 
@@ -189,7 +189,7 @@ Usar API HTTP em uma página HTTPS causa bloqueio de conteúdo misto no navegado
 - indicação de conexão ausente e tentativa de reconexão;
 - atualização disponível sem interromper formulários;
 - navegação, foco e componentes acessíveis;
-- layout mobile e suporte à preferência de movimento reduzido.
+- layout responsivo para celular, tablet e computador, com suporte à preferência de movimento reduzido.
 
 ## Roteiro curto para a apresentação
 
@@ -220,7 +220,6 @@ Antes da feira, deixe a API online, duas contas com perfis completos e pelo meno
 - os dados das vagas exigem conexão; offline é disponibilizado somente o app shell;
 - a busca por proximidade mostra apenas vagas cujos locais possuem coordenadas cadastradas;
 - a instalação no iPhone depende de “Compartilhar → Adicionar à Tela de Início”, sem prompt programático;
-- a experiência foi projetada e testada prioritariamente para Android e iPhone, não para desktop;
 - o certificado HTTPS do preview local é autoassinado e não substitui a validação em uma URL pública confiável.
 
 ## Testes de concorrência do backend

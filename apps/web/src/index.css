@@ -105,6 +105,10 @@
     color: inherit;
   }
 
+  h1[tabindex='-1']:focus {
+    outline: none;
+  }
+
   ::selection {
     color: var(--foreground);
     background: color-mix(in srgb, var(--accent) 72%, white);

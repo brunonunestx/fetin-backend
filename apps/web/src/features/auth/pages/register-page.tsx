@@ -66,7 +66,7 @@ function RegisterPage() {
   return (
     <MobileShell>
       <PageHeader backHref="/boas-vindas" title="Criar conta" />
-      <main className="flex-1 px-5 py-6">
+      <main className="mx-auto w-full max-w-2xl flex-1 px-5 py-6 sm:px-6 lg:py-10">
         <form noValidate onSubmit={(event) => void submit(event)}>
           <fieldset aria-describedby={errors.type ? 'type-error' : undefined}>
             <legend className="text-xl font-extrabold">Como você quer usar o TrampoFácil?</legend>

@@ -37,16 +37,18 @@ function JobsListPage() {
   }
 
   return (
-    <MobileShell>
+    <MobileShell bottomNavigation={<AccountNavigation activeHref="/trabalhos" type={user.type} />}>
       <PageHeader title="Trabalhos" />
       <main className="flex flex-1 flex-col">
-        <section className="px-5 pt-6 pb-4">
-          <h2 className="text-3xl leading-tight font-extrabold">Encontre seu próximo serviço.</h2>
-          <p className="mt-2 text-base leading-relaxed text-muted-foreground">
+        <section className="px-5 pt-6 pb-5 sm:px-6 lg:px-8 lg:pt-8">
+          <h2 className="text-3xl leading-tight font-extrabold lg:text-4xl">
+            Encontre seu próximo serviço.
+          </h2>
+          <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
             Veja oportunidades disponíveis e escolha a que combina com você.
           </p>
 
-          <div className="relative mt-5">
+          <div className="relative mt-5 max-w-2xl">
             <Search
               aria-hidden="true"
               className="pointer-events-none absolute top-3.5 left-4 size-5 text-muted-foreground"
@@ -73,7 +75,7 @@ function JobsListPage() {
             ) : null}
           </div>
 
-          <div className="mt-3 rounded-2xl border border-border bg-card p-4">
+          <div className="mt-3 max-w-2xl rounded-2xl border border-border bg-card p-4">
             <div className="flex items-start gap-3">
               <LocateFixed aria-hidden="true" className="mt-0.5 size-6 shrink-0 text-primary" />
               <div className="min-w-0 flex-1">
@@ -164,7 +166,7 @@ function JobsListPage() {
         ) : null}
 
         {visibleJobs.length > 0 ? (
-          <section aria-labelledby="available-heading" className="px-4 pb-6">
+          <section aria-labelledby="available-heading" className="px-4 pb-7 sm:px-6 lg:px-8">
             <div className="mb-3 flex items-center justify-between gap-3 px-1">
               <h2 className="text-lg font-extrabold" id="available-heading">
                 {nearbyMode ? 'Mais perto primeiro' : 'Disponíveis agora'}
@@ -173,7 +175,7 @@ function JobsListPage() {
                 {visibleJobs.length} {visibleJobs.length === 1 ? 'oportunidade' : 'oportunidades'}
               </span>
             </div>
-            <div className="space-y-3">
+            <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
               {visibleJobs.map((job) => (
                 <JobCard job={job} key={job.id} />
               ))}
@@ -181,7 +183,6 @@ function JobsListPage() {
           </section>
         ) : null}
       </main>
-      <AccountNavigation activeHref="/trabalhos" type={user.type} />
     </MobileShell>
   );
 }

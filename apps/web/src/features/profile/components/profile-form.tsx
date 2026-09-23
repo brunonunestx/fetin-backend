@@ -165,8 +165,8 @@ function ProfileForm({ onCancel, onSaved, profile, submitLabel, type }: ProfileF
 
       <FormError error={updateMutation.error} />
 
-      <div className="flex flex-col gap-2 pt-1">
-        <Button disabled={updateMutation.isPending} size="lg" type="submit">
+      <div className="flex flex-col gap-2 pt-1 sm:flex-row-reverse sm:justify-end">
+        <Button className="sm:min-w-52" disabled={updateMutation.isPending} size="lg" type="submit">
           {updateMutation.isPending ? (
             <>
               <LoaderCircle aria-hidden="true" className="animate-spin" />

@@ -27,7 +27,7 @@ function OwnerJobCard({ job }: { job: Job }) {
         </strong>
       </div>
 
-      <dl className="mt-4 grid grid-cols-2 gap-x-3 gap-y-3 text-sm">
+      <dl className="mt-4 grid grid-cols-1 gap-x-3 gap-y-3 text-sm min-[400px]:grid-cols-2">
         <div className="flex items-center gap-2">
           <CalendarDays aria-hidden="true" className="size-5 shrink-0 text-primary" />
           <div>
@@ -44,7 +44,7 @@ function OwnerJobCard({ job }: { job: Job }) {
             </dd>
           </div>
         </div>
-        <div className="col-span-2 flex items-center gap-2">
+        <div className="col-span-full flex items-center gap-2">
           <MapPin aria-hidden="true" className="size-5 shrink-0 text-primary" />
           <div className="min-w-0">
             <dt className="sr-only">Local</dt>

@@ -134,7 +134,7 @@ function PublishJobForm({
 
           <fieldset className="space-y-2">
             <legend className="text-base leading-tight font-bold">Local do trabalho</legend>
-            <div className="grid gap-2">
+            <div className="grid gap-2 md:grid-cols-2">
               {locations.map((location) => (
                 <label
                   className={cn(
@@ -344,9 +344,10 @@ function PublishJobForm({
         </div>
       ) : null}
 
-      <div className="mt-8 flex flex-col gap-2">
+      <div className="mt-8 flex flex-col gap-2 sm:flex-row-reverse sm:justify-end">
         {step < 4 ? (
           <Button
+            className="sm:min-w-44"
             onClick={(event) => {
               event.preventDefault();
               void continueToNextStep();
@@ -357,7 +358,12 @@ function PublishJobForm({
             Continuar
           </Button>
         ) : (
-          <Button disabled={createMutation.isPending} size="lg" type="submit">
+          <Button
+            className="sm:min-w-44"
+            disabled={createMutation.isPending}
+            size="lg"
+            type="submit"
+          >
             {createMutation.isPending ? (
               <>
                 <LoaderCircle aria-hidden="true" className="animate-spin" />

@@ -13,8 +13,8 @@ function ProfileSummary({ privateDetails, profile }: ProfileSummaryProps) {
   const roleLabel = profile.type === 'operator' ? 'Trabalhador' : 'Contratante';
 
   return (
-    <div className="px-5 py-7">
-      <section className="flex flex-col items-center text-center">
+    <div className="mx-auto grid w-full max-w-5xl gap-7 px-5 py-7 sm:px-6 lg:grid-cols-[18rem_minmax(0,1fr)] lg:items-start lg:px-8 lg:py-10">
+      <section className="flex flex-col items-center text-center lg:sticky lg:top-28 lg:rounded-2xl lg:border lg:border-border lg:bg-card lg:p-6 lg:shadow-sm">
         <ProfileAvatar name={profile.name} />
         <Badge className="mt-4" variant="secondary">
           {roleLabel}
@@ -30,7 +30,10 @@ function ProfileSummary({ privateDetails, profile }: ProfileSummaryProps) {
         ) : null}
       </section>
 
-      <section className="mt-8 border-t border-border pt-6" aria-labelledby="about-heading">
+      <section
+        className="border-t border-border pt-6 lg:col-start-2 lg:row-start-1 lg:rounded-2xl lg:border lg:bg-card lg:p-6 lg:shadow-sm"
+        aria-labelledby="about-heading"
+      >
         <h2 className="text-lg font-extrabold" id="about-heading">
           Sobre
         </h2>
@@ -40,7 +43,10 @@ function ProfileSummary({ privateDetails, profile }: ProfileSummaryProps) {
       </section>
 
       {privateDetails ? (
-        <section className="mt-7 border-t border-border pt-6" aria-labelledby="contact-heading">
+        <section
+          className="border-t border-border pt-6 lg:col-start-2 lg:rounded-2xl lg:border lg:bg-card lg:p-6 lg:shadow-sm"
+          aria-labelledby="contact-heading"
+        >
           <h2 className="text-lg font-extrabold" id="contact-heading">
             Seus dados
           </h2>

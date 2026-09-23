@@ -2,7 +2,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 function LoadingList({ count = 3 }: { count?: number }) {
   return (
-    <div aria-busy="true" aria-label="Carregando conteúdo" className="space-y-3 px-4 py-5">
+    <div
+      aria-busy="true"
+      aria-label="Carregando conteúdo"
+      className="grid gap-3 px-4 py-5 sm:px-6 md:grid-cols-2 lg:px-8 2xl:grid-cols-3"
+    >
       {Array.from({ length: count }, (_, index) => (
         <div className="rounded-2xl border border-border bg-card p-4" key={index}>
           <div className="flex gap-3">

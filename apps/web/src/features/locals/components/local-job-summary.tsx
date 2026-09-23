@@ -31,7 +31,7 @@ function LocalJobSummary({ job }: { job: Job }) {
           {formatCurrency(job.value)}
         </strong>
       </div>
-      <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
+      <dl className="mt-4 grid grid-cols-1 gap-3 text-sm min-[400px]:grid-cols-2">
         <div className="flex items-center gap-2">
           <CalendarDays aria-hidden="true" className="size-5 shrink-0 text-primary" />
           <div>

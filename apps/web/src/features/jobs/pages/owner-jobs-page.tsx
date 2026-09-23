@@ -45,7 +45,7 @@ function OwnerJobsPage() {
   }
 
   return (
-    <MobileShell>
+    <MobileShell bottomNavigation={<AccountNavigation activeHref="/painel" type={user.type} />}>
       <PageHeader
         action={
           <Button asChild size="sm">
@@ -58,9 +58,11 @@ function OwnerJobsPage() {
         title="Painel"
       />
       <main className="flex flex-1 flex-col">
-        <section className="px-5 pt-6 pb-5">
-          <h2 className="text-3xl leading-tight font-extrabold">Acompanhe suas vagas.</h2>
-          <p className="mt-2 text-base leading-relaxed text-muted-foreground">
+        <section className="px-5 pt-6 pb-5 sm:px-6 lg:px-8 lg:pt-8">
+          <h2 className="text-3xl leading-tight font-extrabold lg:text-4xl">
+            Acompanhe suas vagas.
+          </h2>
+          <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
             Publique trabalhos e veja rapidamente o que está acontecendo.
           </p>
         </section>
@@ -77,7 +79,10 @@ function OwnerJobsPage() {
 
         {jobsQuery.isSuccess ? (
           <>
-            <section aria-label="Resumo das vagas" className="grid grid-cols-3 gap-2 px-4 pb-6">
+            <section
+              aria-label="Resumo das vagas"
+              className="grid grid-cols-3 gap-2 px-4 pb-6 sm:px-6 lg:max-w-3xl lg:gap-4 lg:px-8"
+            >
               <div className="rounded-2xl bg-secondary p-3 text-center text-secondary-foreground">
                 <BriefcaseBusiness aria-hidden="true" className="mx-auto size-5 text-primary" />
                 <strong className="mt-1 block text-2xl font-extrabold">{counts.available}</strong>
@@ -107,13 +112,13 @@ function OwnerJobsPage() {
               />
             ) : (
               <section aria-labelledby="owner-jobs-heading" className="pb-7">
-                <div className="px-4">
+                <div className="px-4 sm:px-6 lg:px-8">
                   <h2 className="px-1 text-lg font-extrabold" id="owner-jobs-heading">
                     Suas vagas
                   </h2>
                   <div
                     aria-label="Filtrar vagas"
-                    className="-mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-2"
+                    className="-mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:px-6 lg:mx-0 lg:flex-wrap lg:px-0"
                     role="group"
                   >
                     {filters.map((item) => (
@@ -142,7 +147,7 @@ function OwnerJobsPage() {
                     title="Nenhuma vaga encontrada"
                   />
                 ) : (
-                  <div className="space-y-3 px-4 pt-3">
+                  <div className="grid gap-3 px-4 pt-3 sm:px-6 md:grid-cols-2 lg:px-8 2xl:grid-cols-3">
                     {visibleJobs.map((job) => (
                       <OwnerJobCard job={job} key={job.id} />
                     ))}
@@ -153,7 +158,6 @@ function OwnerJobsPage() {
           </>
         ) : null}
       </main>
-      <AccountNavigation activeHref="/painel" type={user.type} />
     </MobileShell>
   );
 }
