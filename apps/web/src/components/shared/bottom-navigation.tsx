@@ -29,7 +29,7 @@ function BottomNavigation({ activeHref, desktopOnly = false, items }: BottomNavi
       <div className="hidden px-2 lg:block">
         <Brand />
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-          Trabalho e confianÃ§a, sem complicaÃ§Ã£o.
+          Trabalho e confiança, sem complicação.
         </p>
       </div>
 
