@@ -14,7 +14,7 @@ on:
 env:
   AWS_REGION: us-east-1
   S3_BUCKET: trampofacil-production-frontend
-  CLOUDFRONT_DISTRIBUTION_ID: E20CXBM2KA4YXN
+  CLOUDFRONT_DISTRIBUTION_ID: E2G7EIZHQGEHU
 
 concurrency:
   group: deploy-frontend
@@ -34,8 +34,8 @@ jobs:
         with:
           node-version: '22.12.0'
 
-      - name: Enable Corepack (pnpm)
-        run: corepack enable
+      - name: Setup pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
 
       - name: Instalar dependências
         working-directory: apps
@@ -43,6 +43,8 @@ jobs:
 
       - name: Build
         working-directory: apps
+        env:
+          VITE_API_URL: http://100.58.167.154
         run: pnpm --filter @trampofacil/web build
 
       - name: Configure AWS credentials
