@@ -10,3 +10,5 @@ ssh_allowed_cidr_blocks = []
 
 jwt_secret        = "change-me"
 postgres_password = "change-me"
+
+letsencrypt_email = "change-me@example.com"

@@ -5,11 +5,31 @@ resource "aws_cloudfront_origin_access_control" "frontend" {
   signing_protocol                  = "sigv4"
 }
 
+# CloudFront só aceita certificado ACM emitido em us-east-1 — var.aws_region já é
+# us-east-1 (ver terraform.tfvars), então o provider default serve sem alias.
+resource "aws_acm_certificate" "frontend" {
+  domain_name       = var.frontend_domain_name
+  validation_method = "DNS"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  tags = local.common_tags
+}
+
+# Os registros de validação DNS ficam em dns.tf (junto dos demais Route53).
+resource "aws_acm_certificate_validation" "frontend" {
+  certificate_arn         = aws_acm_certificate.frontend.arn
+  validation_record_fqdns = [for r in aws_route53_record.frontend_cert_validation : r.fqdn]
+}
+
 resource "aws_cloudfront_distribution" "frontend" {
   enabled             = true
   default_root_object = "index.html"
   price_class         = var.cloudfront_price_class
   comment             = "${var.project_name}-${var.environment} frontend"
+  aliases             = [var.frontend_domain_name]
 
   origin {
     domain_name              = aws_s3_bucket.frontend.bucket_regional_domain_name
@@ -53,7 +73,9 @@ resource "aws_cloudfront_distribution" "frontend" {
   }
 
   viewer_certificate {
-    cloudfront_default_certificate = true
+    acm_certificate_arn      = aws_acm_certificate_validation.frontend.certificate_arn
+    ssl_support_method       = "sni-only"
+    minimum_protocol_version = "TLSv1.2_2021"
   }
 
   tags = local.common_tags

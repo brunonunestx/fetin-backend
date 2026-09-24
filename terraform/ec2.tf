@@ -43,6 +43,14 @@ resource "aws_security_group" "backend" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  ingress {
+    description = "HTTPS para a API"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   dynamic "ingress" {
     for_each = length(var.ssh_allowed_cidr_blocks) > 0 ? [1] : []
 

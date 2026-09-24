@@ -46,7 +46,7 @@ jobs:
       - name: Build
         working-directory: apps
         env:
-          VITE_API_URL: http://100.58.167.154
+          VITE_API_URL: https://fetin-api.bruno-teixeira.com
         run: pnpm --filter @trampofacil/web build
 
       - name: Configure AWS credentials

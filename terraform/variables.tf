@@ -7,7 +7,7 @@ variable "aws_region" {
 variable "aws_profile" {
   description = "Profile do ~/.aws/credentials usado para autenticar (null usa a credential chain padrão, ex: env vars no CI)"
   type        = string
-  default     = "bruno-account"
+  default     = "my-account"
 }
 
 variable "project_name" {
@@ -114,4 +114,23 @@ variable "postgres_db" {
   description = "Nome do database do Postgres rodando no container da instância EC2"
   type        = string
   default     = "core_api"
+}
+
+# --- DNS / HTTPS ---
+
+variable "domain_name" {
+  description = "Domínio público da API, usado no registro Route53 e na emissão do certificado Let's Encrypt"
+  type        = string
+  default     = "fetin-api.bruno-teixeira.com"
+}
+
+variable "letsencrypt_email" {
+  description = "E-mail de contato usado no registro do certificado Let's Encrypt (avisos de expiração)"
+  type        = string
+}
+
+variable "frontend_domain_name" {
+  description = "Domínio público do frontend, usado no registro Route53 (alias) e no certificado ACM do CloudFront"
+  type        = string
+  default     = "fetin.bruno-teixeira.com"
 }
